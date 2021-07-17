@@ -1,5 +1,5 @@
-use ray_tracer::tuple::Tuple;
 use ray_tracer::canvas::{Canvas, Color};
+use ray_tracer::tuple::Tuple;
 
 use std::fs::File;
 use std::io::Write;
@@ -17,10 +17,7 @@ struct Environment {
 fn tick(env: &Environment, proj: &Projectile) -> Projectile {
     let position = &proj.position + &proj.velocity;
     let velocity = &(&proj.velocity + &env.gravity) + &env.wind;
-    Projectile {
-        position,
-        velocity,
-    }
+    Projectile { position, velocity }
 }
 
 fn main() {
@@ -32,10 +29,7 @@ fn main() {
     };
     let gravity = Tuple::vector(0.0, -0.1, 0.0);
     let wind = Tuple::vector(-0.01, 0.0, 0.0);
-    let e = Environment {
-        gravity,
-        wind,
-    };
+    let e = Environment { gravity, wind };
 
     let mut c = Canvas::new(900, 550);
     let color = Color::new(1.0, 0.0, 0.0);
@@ -43,7 +37,12 @@ fn main() {
     while p.position.y > 0.0 {
         println!("Pos: {:?}", p.position);
         p = tick(&e, &p);
-        write_square(&mut c, p.position.x as usize, 550 - p.position.y as usize, &color);
+        write_square(
+            &mut c,
+            p.position.x as usize,
+            550 - p.position.y as usize,
+            &color,
+        );
     }
 
     let ppm_contents = c.to_ppm();
@@ -53,12 +52,11 @@ fn main() {
 
 fn write_square(c: &mut Canvas, x: usize, y: usize, color: &Color) {
     if x < 5 || y < 5 {
-        return
+        return;
     }
-    for j in y-5..y+5 {
-        for i in x-5..x+5 {
+    for j in y - 5..y + 5 {
+        for i in x - 5..x + 5 {
             c.write_pixel(i, j, color);
         }
     }
 }
-

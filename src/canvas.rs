@@ -11,15 +11,16 @@ pub struct Color {
 
 impl Color {
     pub fn new(red: f64, green: f64, blue: f64) -> Self {
-        Color {
-            red,
-            green,
-            blue,
-        }
+        Color { red, green, blue }
     }
 
     pub fn ppm_value(&self) -> String {
-        format!("{} {} {}", Self::value(self.red), Self::value(self.green), Self::value(self.blue))
+        format!(
+            "{} {} {}",
+            Self::value(self.red),
+            Self::value(self.green),
+            Self::value(self.blue)
+        )
     }
 
     fn value(f: f64) -> usize {
@@ -29,9 +30,9 @@ impl Color {
 
 impl PartialEq for Color {
     fn eq(&self, other: &Self) -> bool {
-        equal_f64(self.red, other.red) &&
-            equal_f64(self.green, other.green) &&
-            equal_f64(self.blue, other.blue)
+        equal_f64(self.red, other.red)
+            && equal_f64(self.green, other.green)
+            && equal_f64(self.blue, other.blue)
     }
 }
 impl Eq for Color {}
@@ -40,7 +41,11 @@ impl std::ops::Add for Color {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Color::new(self.red + rhs.red, self.green + rhs.green, self.blue + rhs.blue)
+        Color::new(
+            self.red + rhs.red,
+            self.green + rhs.green,
+            self.blue + rhs.blue,
+        )
     }
 }
 
@@ -48,13 +53,17 @@ impl std::ops::Sub for Color {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        Color::new(self.red - rhs.red, self.green - rhs.green, self.blue - rhs.blue)
+        Color::new(
+            self.red - rhs.red,
+            self.green - rhs.green,
+            self.blue - rhs.blue,
+        )
     }
 }
 
 impl std::ops::Mul<f64> for Color {
     type Output = Self;
-    
+
     fn mul(self, rhs: f64) -> Self::Output {
         Color::new(self.red * rhs, self.green * rhs, self.blue * rhs)
     }
@@ -64,7 +73,11 @@ impl std::ops::Mul<Color> for Color {
     type Output = Self;
 
     fn mul(self, rhs: Color) -> Self::Output {
-        Color::new(self.red * rhs.red, self.green * rhs.green, self.blue * rhs.blue)
+        Color::new(
+            self.red * rhs.red,
+            self.green * rhs.green,
+            self.blue * rhs.blue,
+        )
     }
 }
 
@@ -80,7 +93,10 @@ impl Canvas {
         Self {
             width,
             height,
-            pixels: (0..width*height).into_iter().map(|_| Color::new(0.0, 0.0, 0.0)).collect(),
+            pixels: (0..width * height)
+                .into_iter()
+                .map(|_| Color::new(0.0, 0.0, 0.0))
+                .collect(),
         }
     }
 
@@ -101,18 +117,28 @@ impl Canvas {
     }
 
     pub fn to_ppm(&self) -> String {
-        format!("P3\n{} {}\n{}\n{}\n", self.width, self.height, MAX_COLOR, self.ppm_pixel_content())
+        format!(
+            "P3\n{} {}\n{}\n{}\n",
+            self.width,
+            self.height,
+            MAX_COLOR,
+            self.ppm_pixel_content()
+        )
     }
 
     fn ppm_pixel_content(&self) -> String {
-        let pixel_rows: Vec<String> = (0..self.height).into_iter().map(|j| self.ppm_pixel_row(j)).collect();
+        let pixel_rows: Vec<String> = (0..self.height)
+            .into_iter()
+            .map(|j| self.ppm_pixel_row(j))
+            .collect();
         pixel_rows.join("\n")
     }
 
     fn ppm_pixel_row(&self, row: usize) -> String {
-        let pixel_colors: Vec<String> = (0..self.width).into_iter().map(|i| {
-            self.pixel_at(i, row).ppm_value()
-        }).collect();
+        let pixel_colors: Vec<String> = (0..self.width)
+            .into_iter()
+            .map(|i| self.pixel_at(i, row).ppm_value())
+            .collect();
 
         let line = pixel_colors.join(" ");
         if line.len() > 70 {
@@ -233,13 +259,11 @@ mod tests {
         c.write_pixel(4, 2, &c3);
         let ppm = c.to_ppm();
 
-        ppm.lines().enumerate().for_each(|(i, line)| {
-            match i {
-                3 => assert_eq!(line, "255 0 0 0 0 0 0 0 0 0 0 0 0 0 0"),
-                4 => assert_eq!(line, "0 0 0 0 0 0 0 127 0 0 0 0 0 0 0"),
-                5 => assert_eq!(line, "0 0 0 0 0 0 0 0 0 0 0 0 0 0 255"),
-                _ => (),
-            }
+        ppm.lines().enumerate().for_each(|(i, line)| match i {
+            3 => assert_eq!(line, "255 0 0 0 0 0 0 0 0 0 0 0 0 0 0"),
+            4 => assert_eq!(line, "0 0 0 0 0 0 0 127 0 0 0 0 0 0 0"),
+            5 => assert_eq!(line, "0 0 0 0 0 0 0 0 0 0 0 0 0 0 255"),
+            _ => (),
         });
 
         assert_eq!(ppm.lines().count(), 3 + 3);
@@ -257,17 +281,21 @@ mod tests {
         }
 
         let ppm = c.to_ppm();
-        ppm.lines().enumerate().for_each(|(i, line)| {
-            match i {
-                3 => assert_eq!(line, "255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204"),
-                4 => assert_eq!(line, "153 255 204 153 255 204 153 255 204 153 255 204 153"),
-                5 => assert_eq!(line, "255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204"),
-                6 => assert_eq!(line, "153 255 204 153 255 204 153 255 204 153 255 204 153"),
-                _ => (),
-            }
+        ppm.lines().enumerate().for_each(|(i, line)| match i {
+            3 => assert_eq!(
+                line,
+                "255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204"
+            ),
+            4 => assert_eq!(line, "153 255 204 153 255 204 153 255 204 153 255 204 153"),
+            5 => assert_eq!(
+                line,
+                "255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204"
+            ),
+            6 => assert_eq!(line, "153 255 204 153 255 204 153 255 204 153 255 204 153"),
+            _ => (),
         });
 
-        assert_eq!(ppm.lines().count(), 3 + 2*2);
+        assert_eq!(ppm.lines().count(), 3 + 2 * 2);
     }
 
     #[test]
@@ -278,4 +306,3 @@ mod tests {
         assert_eq!(ppm.chars().last(), Some('\n'));
     }
 }
-

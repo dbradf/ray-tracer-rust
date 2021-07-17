@@ -22,4 +22,3 @@ mod tests {
         assert!(!equal_f64(3.14, 3.13));
     }
 }
-

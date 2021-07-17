@@ -18,12 +18,7 @@ pub struct Tuple {
 
 impl Tuple {
     pub fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
-        Tuple {
-            x,
-            y, 
-            z,
-            w,
-        }
+        Tuple { x, y, z, w }
     }
 
     pub fn point(x: f64, y: f64, z: f64) -> Self {
@@ -48,7 +43,12 @@ impl Tuple {
 
     pub fn normalize(&self) -> Self {
         let magnitude = self.magnitude();
-        Tuple::new(self.x / magnitude, self.y / magnitude, self.z / magnitude, self.w / magnitude)
+        Tuple::new(
+            self.x / magnitude,
+            self.y / magnitude,
+            self.z / magnitude,
+            self.w / magnitude,
+        )
     }
 
     fn dot(&self, rhs: &Self) -> f64 {
@@ -59,17 +59,17 @@ impl Tuple {
         Self::vector(
             self.y * rhs.z - self.z * rhs.y,
             self.z * rhs.x - self.x * rhs.z,
-            self.x * rhs.y - self.y * rhs.x
+            self.x * rhs.y - self.y * rhs.x,
         )
     }
 }
 
 impl PartialEq for Tuple {
     fn eq(&self, other: &Self) -> bool {
-        equal_f64(self.x, other.x) &&
-            equal_f64(self.y, other.y) &&
-            equal_f64(self.z, other.z) &&
-            equal_f64(self.w, other.w)
+        equal_f64(self.x, other.x)
+            && equal_f64(self.y, other.y)
+            && equal_f64(self.z, other.z)
+            && equal_f64(self.w, other.w)
     }
 }
 impl Eq for Tuple {}
@@ -78,7 +78,12 @@ impl std::ops::Add for Tuple {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Tuple::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z, self.w + rhs.w)
+        Tuple::new(
+            self.x + rhs.x,
+            self.y + rhs.y,
+            self.z + rhs.z,
+            self.w + rhs.w,
+        )
     }
 }
 
@@ -86,7 +91,12 @@ impl std::ops::Add for &Tuple {
     type Output = Tuple;
 
     fn add(self, rhs: &Tuple) -> Tuple {
-        Tuple::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z, self.w + rhs.w)
+        Tuple::new(
+            self.x + rhs.x,
+            self.y + rhs.y,
+            self.z + rhs.z,
+            self.w + rhs.w,
+        )
     }
 }
 
@@ -94,7 +104,12 @@ impl std::ops::Sub for Tuple {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        Tuple::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z, self.w - rhs.w)
+        Tuple::new(
+            self.x - rhs.x,
+            self.y - rhs.y,
+            self.z - rhs.z,
+            self.w - rhs.w,
+        )
     }
 }
 
@@ -196,7 +211,7 @@ mod tests {
 
     #[test]
     fn test_subtracting_a_vector_from_zero() {
-        let zero  = Tuple::vector(0.0, 0.0, 0.0);
+        let zero = Tuple::vector(0.0, 0.0, 0.0);
         let v = Tuple::vector(1.0, -2.0, 3.0);
 
         assert_eq!(zero - v, Tuple::vector(-1.0, 2.0, -3.0));
@@ -284,4 +299,3 @@ mod tests {
         assert_eq!(b.cross(&a), Tuple::vector(1.0, -2.0, 1.0));
     }
 }
-
