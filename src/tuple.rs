@@ -1,13 +1,6 @@
 use std::cmp::{Eq, PartialEq};
-const EPSILON: f64 = 0.00001;
 
-fn equal_f64(x: f64, y: f64) -> bool {
-    if (x - y).abs() < EPSILON {
-        true
-    } else {
-        false
-    }
-}
+use crate::utils::equal_f64;
 
 #[derive(Debug, PartialEq)]
 enum TupleKind {
