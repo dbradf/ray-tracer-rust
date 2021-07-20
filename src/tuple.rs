@@ -51,7 +51,7 @@ impl Tuple {
         )
     }
 
-    fn dot(&self, rhs: &Self) -> f64 {
+    pub fn dot(&self, rhs: &Self) -> f64 {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z + self.w * rhs.w
     }
 
@@ -113,6 +113,19 @@ impl std::ops::Sub for Tuple {
     }
 }
 
+impl std::ops::Sub for &Tuple {
+    type Output = Tuple;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Tuple::new(
+            self.x - rhs.x,
+            self.y - rhs.y,
+            self.z - rhs.z,
+            self.w - rhs.w,
+        )
+    }
+}
+
 impl std::ops::Neg for Tuple {
     type Output = Self;
 
@@ -125,6 +138,14 @@ impl std::ops::Mul<f64> for Tuple {
     type Output = Self;
 
     fn mul(self, rhs: f64) -> Self {
+        Tuple::new(self.x * rhs, self.y * rhs, self.z * rhs, self.w * rhs)
+    }
+}
+
+impl std::ops::Mul<f64> for &Tuple {
+    type Output = Tuple;
+
+    fn mul(self, rhs: f64) -> Self::Output {
         Tuple::new(self.x * rhs, self.y * rhs, self.z * rhs, self.w * rhs)
     }
 }

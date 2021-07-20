@@ -1,4 +1,7 @@
 use crate::utils::equal_f64;
+use std::error::Error;
+use std::fs::File;
+use std::io::Write;
 
 const MAX_COLOR: usize = 255;
 
@@ -159,6 +162,14 @@ impl Canvas {
         } else {
             line
         }
+    }
+
+    pub fn save(&self, target_file: &str) -> Result<(), Box<dyn Error>> {
+        let ppm_contents = self.to_ppm();
+        let mut file = File::create(target_file)?;
+        write!(&mut file, "{}", ppm_contents)?;
+
+        Ok(())
     }
 }
 

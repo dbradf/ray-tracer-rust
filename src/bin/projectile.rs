@@ -1,9 +1,6 @@
 use ray_tracer::canvas::{Canvas, Color};
 use ray_tracer::tuple::Tuple;
 
-use std::fs::File;
-use std::io::Write;
-
 struct Projectile {
     position: Tuple,
     velocity: Tuple,
@@ -45,9 +42,7 @@ fn main() {
         );
     }
 
-    let ppm_contents = c.to_ppm();
-    let mut file = File::create("image.ppm").unwrap();
-    write!(&mut file, "{}", ppm_contents).unwrap();
+    c.save("image.ppm").unwrap();
 }
 
 fn write_square(c: &mut Canvas, x: usize, y: usize, color: &Color) {

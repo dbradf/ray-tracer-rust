@@ -20,64 +20,88 @@ impl Matrix {
 
     pub fn identify() -> Self {
         Self::new(&[
-                  1.0, 0.0, 0.0, 0.0,
-                  0.0, 1.0, 0.0, 0.0,
-                  0.0, 0.0, 1.0, 0.0,
-                  0.0, 0.0, 0.0, 1.0,
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
         ])
     }
 
     pub fn translation(x: f64, y: f64, z: f64) -> Self {
         Self::new(&[
-                  1.0, 0.0, 0.0, x,
-                  0.0, 1.0, 0.0, y,
-                  0.0, 0.0, 1.0, z,
-                  0.0, 0.0, 0.0, 1.0,
+            1.0, 0.0, 0.0, x, 0.0, 1.0, 0.0, y, 0.0, 0.0, 1.0, z, 0.0, 0.0, 0.0, 1.0,
         ])
     }
 
     pub fn scaling(x: f64, y: f64, z: f64) -> Self {
         Self::new(&[
-                  x, 0.0, 0.0, 0.0,
-                  0.0, y, 0.0, 0.0,
-                  0.0, 0.0, z, 0.0,
-                  0.0, 0.0, 0.0, 1.0,
+            x, 0.0, 0.0, 0.0, 0.0, y, 0.0, 0.0, 0.0, 0.0, z, 0.0, 0.0, 0.0, 0.0, 1.0,
         ])
     }
 
     pub fn rotation_x(r: f64) -> Self {
         Self::new(&[
-                  1.0, 0.0, 0.0, 0.0,
-                  0.0, r.cos(), -r.sin(), 0.0,
-                  0.0, r.sin(), r.cos(), 0.0,
-                  0.0, 0.0, 0.0, 1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            r.cos(),
+            -r.sin(),
+            0.0,
+            0.0,
+            r.sin(),
+            r.cos(),
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
         ])
     }
 
     pub fn rotation_y(r: f64) -> Self {
         Self::new(&[
-                  r.cos(), 0.0, r.sin(), 0.0,
-                  0.0, 1.0, 0.0, 0.0,
-                  -r.sin(), 0.0, r.cos(), 0.0,
-                  0.0, 0.0, 0.0, 1.0,
+            r.cos(),
+            0.0,
+            r.sin(),
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            -r.sin(),
+            0.0,
+            r.cos(),
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
         ])
     }
 
     pub fn rotation_z(r: f64) -> Self {
         Self::new(&[
-                  r.cos(), -r.sin(), 0.0, 0.0,
-                  r.sin(), r.cos(), 0.0, 0.0,
-                  0.0, 0.0, 1.0, 0.0,
-                  0.0, 0.0, 0.0, 1.0,
+            r.cos(),
+            -r.sin(),
+            0.0,
+            0.0,
+            r.sin(),
+            r.cos(),
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
         ])
     }
 
     pub fn shearing(x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Self {
         Self::new(&[
-                  1.0, x_y, x_z, 0.0,
-                  y_x, 1.0, y_z, 0.0,
-                  z_x, z_y, 1.0, 0.0,
-                  0.0, 0.0, 0.0, 1.0,
+            1.0, x_y, x_z, 0.0, y_x, 1.0, y_z, 0.0, z_x, z_y, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
         ])
     }
 
@@ -98,12 +122,15 @@ impl Matrix {
     }
 
     pub fn transpose(&self) -> Matrix {
-        let elements: Vec<f64> = (0..self.size * self.size).into_iter().map(|index| {
-            let row = index / self.size;
-            let col = index % self.size;
+        let elements: Vec<f64> = (0..self.size * self.size)
+            .into_iter()
+            .map(|index| {
+                let row = index / self.size;
+                let col = index % self.size;
 
-            self.at(col, row)
-        }).collect();
+                self.at(col, row)
+            })
+            .collect();
 
         Matrix::new(&elements)
     }
@@ -112,21 +139,28 @@ impl Matrix {
         if self.size == 2 {
             self.at(0, 0) * self.at(1, 1) - self.at(0, 1) * self.at(1, 0)
         } else {
-            (0..self.size).into_iter().map(|i| self.at(0, i) * self.cofactor(0, i)).sum()
+            (0..self.size)
+                .into_iter()
+                .map(|i| self.at(0, i) * self.cofactor(0, i))
+                .sum()
         }
     }
 
     pub fn submatrix(&self, row: usize, col: usize) -> Matrix {
-        let elements: Vec<f64> = (0..self.size*self.size).into_iter().map(|index| {
-            let r = index / self.size;
-            let c = index % self.size;
+        let elements: Vec<f64> = (0..self.size * self.size)
+            .into_iter()
+            .map(|index| {
+                let r = index / self.size;
+                let c = index % self.size;
 
-            if r == row || c == col {
-                None
-            } else {
-                Some(self.at(r, c))
-            }
-        }).filter_map(|x| x).collect();
+                if r == row || c == col {
+                    None
+                } else {
+                    Some(self.at(r, c))
+                }
+            })
+            .filter_map(|x| x)
+            .collect();
 
         Matrix::new(&elements)
     }
@@ -151,17 +185,20 @@ impl Matrix {
     pub fn inverse(&self) -> Option<Matrix> {
         let det = self.determinant();
         if equal_f64(det, 0.0) {
-            return None
+            return None;
         }
 
-        let elements: Vec<f64> = (0..self.size * self.size).into_iter().map(|index| {
-            let row = index / self.size;
-            let col = index % self.size;
+        let elements: Vec<f64> = (0..self.size * self.size)
+            .into_iter()
+            .map(|index| {
+                let row = index / self.size;
+                let col = index % self.size;
 
-            let c = self.cofactor(col, row);
+                let c = self.cofactor(col, row);
 
-            c / det
-        }).collect();
+                c / det
+            })
+            .collect();
 
         Some(Matrix::new(&elements))
     }
@@ -169,7 +206,10 @@ impl Matrix {
 
 impl PartialEq for Matrix {
     fn eq(&self, other: &Self) -> bool {
-        self.elements.iter().zip(&other.elements).all(|(a, b)| equal_f64(*a, *b))
+        self.elements
+            .iter()
+            .zip(&other.elements)
+            .all(|(a, b)| equal_f64(*a, *b))
     }
 }
 
@@ -194,6 +234,56 @@ impl std::ops::Mul<Tuple> for Matrix {
     type Output = Tuple;
 
     fn mul(self, rhs: Tuple) -> Self::Output {
+        Tuple::new(
+            self.at(0, 0) * rhs.x
+                + self.at(0, 1) * rhs.y
+                + self.at(0, 2) * rhs.z
+                + self.at(0, 3) * rhs.w,
+            self.at(1, 0) * rhs.x
+                + self.at(1, 1) * rhs.y
+                + self.at(1, 2) * rhs.z
+                + self.at(1, 3) * rhs.w,
+            self.at(2, 0) * rhs.x
+                + self.at(2, 1) * rhs.y
+                + self.at(2, 2) * rhs.z
+                + self.at(2, 3) * rhs.w,
+            self.at(3, 0) * rhs.x
+                + self.at(3, 1) * rhs.y
+                + self.at(3, 2) * rhs.z
+                + self.at(3, 3) * rhs.w,
+        )
+    }
+}
+
+impl std::ops::Mul<&Tuple> for Matrix {
+    type Output = Tuple;
+
+    fn mul(self, rhs: &Tuple) -> Self::Output {
+        Tuple::new(
+            self.at(0, 0) * rhs.x
+                + self.at(0, 1) * rhs.y
+                + self.at(0, 2) * rhs.z
+                + self.at(0, 3) * rhs.w,
+            self.at(1, 0) * rhs.x
+                + self.at(1, 1) * rhs.y
+                + self.at(1, 2) * rhs.z
+                + self.at(1, 3) * rhs.w,
+            self.at(2, 0) * rhs.x
+                + self.at(2, 1) * rhs.y
+                + self.at(2, 2) * rhs.z
+                + self.at(2, 3) * rhs.w,
+            self.at(3, 0) * rhs.x
+                + self.at(3, 1) * rhs.y
+                + self.at(3, 2) * rhs.z
+                + self.at(3, 3) * rhs.w,
+        )
+    }
+}
+
+impl std::ops::Mul<&Tuple> for &Matrix {
+    type Output = Tuple;
+
+    fn mul(self, rhs: &Tuple) -> Self::Output {
         Tuple::new(
             self.at(0, 0) * rhs.x
                 + self.at(0, 1) * rhs.y
@@ -308,10 +398,7 @@ mod tests {
     #[test]
     fn test_multiplying_by_identity_matrix() {
         let a = Matrix::new(&[
-                            0.0, 1.0, 2.0, 4.0,
-                            1.0, 2.0, 4.8, 8.0,
-                            2.0, 4.0, 8.0, 16.0,
-                            4.0, 8.0, 16.0, 32.0,
+            0.0, 1.0, 2.0, 4.0, 1.0, 2.0, 4.8, 8.0, 2.0, 4.0, 8.0, 16.0, 4.0, 8.0, 16.0, 32.0,
         ]);
         let id = Matrix::identify();
 
@@ -329,18 +416,15 @@ mod tests {
     #[test]
     fn test_transposing_a_matrix() {
         let a = Matrix::new(&[
-                            0.0, 9.0, 3.0, 0.0,
-                            9.0, 8.0, 0.0, 8.0,
-                            1.0, 8.0, 5.0, 3.0,
-                            0.0, 0.0, 5.0, 8.0,
+            0.0, 9.0, 3.0, 0.0, 9.0, 8.0, 0.0, 8.0, 1.0, 8.0, 5.0, 3.0, 0.0, 0.0, 5.0, 8.0,
         ]);
 
-        assert_eq!(a.transpose(), Matrix::new(&[
-                                              0.0, 9.0, 1.0, 0.0,
-                                              9.0, 8.0, 8.0, 0.0,
-                                              3.0, 0.0, 5.0, 5.0,
-                                              0.0, 8.0, 3.0, 8.0,
-        ]));
+        assert_eq!(
+            a.transpose(),
+            Matrix::new(&[
+                0.0, 9.0, 1.0, 0.0, 9.0, 8.0, 8.0, 0.0, 3.0, 0.0, 5.0, 5.0, 0.0, 8.0, 3.0, 8.0,
+            ])
+        );
     }
 
     #[test]
@@ -359,38 +443,26 @@ mod tests {
 
     #[test]
     fn test_submatrix_of_a_3x3_matrix_should_be_a_2x2_matrix() {
-        let a = Matrix::new(&[
-                            1.0, 5.0, 0.0,
-                            -3.0, 2.0, 7.0,
-                            0.0, 6.0, -3.0,
-        ]);
+        let a = Matrix::new(&[1.0, 5.0, 0.0, -3.0, 2.0, 7.0, 0.0, 6.0, -3.0]);
 
         assert_eq!(a.submatrix(0, 2), Matrix::new(&[-3.0, 2.0, 0.0, 6.0]));
     }
-    
+
     #[test]
     fn test_submatrix_of_a_4x4_matrix_should_be_a_3x3_matrix() {
         let a = Matrix::new(&[
-                            -6.0, 1.0, 1.0, 6.0,
-                            -8.0, 5.0, 8.0, 6.0,
-                            -1.0, 0.0, 8.0, 2.0,
-                            -7.0, 1.0, -1.0, 1.0,
+            -6.0, 1.0, 1.0, 6.0, -8.0, 5.0, 8.0, 6.0, -1.0, 0.0, 8.0, 2.0, -7.0, 1.0, -1.0, 1.0,
         ]);
 
-        assert_eq!(a.submatrix(2, 1), Matrix::new(&[
-                                                  -6.0, 1.0, 6.0,
-                                                  -8.0, 8.0, 6.0,
-                                                  -7.0, -1.0, 1.0,
-        ]));
+        assert_eq!(
+            a.submatrix(2, 1),
+            Matrix::new(&[-6.0, 1.0, 6.0, -8.0, 8.0, 6.0, -7.0, -1.0, 1.0,])
+        );
     }
 
     #[test]
     fn test_calculating_minor_of_3x3_matrix() {
-        let a = Matrix::new(&[
-                            3.0, 5.0, 0.0,
-                            2.0, -1.0, -7.0,
-                            6.0, -1.0, 5.0,
-        ]);
+        let a = Matrix::new(&[3.0, 5.0, 0.0, 2.0, -1.0, -7.0, 6.0, -1.0, 5.0]);
         let b = a.submatrix(1, 0);
 
         assert!(equal_f64(b.determinant(), 25.0));
@@ -399,11 +471,7 @@ mod tests {
 
     #[test]
     fn test_calc_cofactor_of_a_3x3_matrix() {
-        let a = Matrix::new(&[
-                            3.0, 5.0, 0.0,
-                            2.0, -1.0, -7.0,
-                            6.0, -1.0, 5.0,
-        ]);
+        let a = Matrix::new(&[3.0, 5.0, 0.0, 2.0, -1.0, -7.0, 6.0, -1.0, 5.0]);
 
         assert!(equal_f64(a.minor(0, 0), -12.0));
         assert!(equal_f64(a.cofactor(0, 0), -12.0));
@@ -413,11 +481,7 @@ mod tests {
 
     #[test]
     fn test_calc_determinant_of_a_3x3_matrix() {
-        let a = Matrix::new(&[
-                            1.0, 2.0, 6.0,
-                            -5.0, 8.0, -4.0,
-                            2.0, 6.0, 4.0,
-        ]);
+        let a = Matrix::new(&[1.0, 2.0, 6.0, -5.0, 8.0, -4.0, 2.0, 6.0, 4.0]);
 
         assert!(equal_f64(a.cofactor(0, 0), 56.0));
         assert!(equal_f64(a.cofactor(0, 1), 12.0));
@@ -428,10 +492,7 @@ mod tests {
     #[test]
     fn test_calc_determinant_of_a_4x4_matrix() {
         let a = Matrix::new(&[
-                            -2.0, -8.0, 3.0, 5.0,
-                            -3.0, 1.0, 7.0, 3.0,
-                            1.0, 2.0, -9.0, 6.0,
-                            -6.0, 7.0, 7.0, -9.0,
+            -2.0, -8.0, 3.0, 5.0, -3.0, 1.0, 7.0, 3.0, 1.0, 2.0, -9.0, 6.0, -6.0, 7.0, 7.0, -9.0,
         ]);
 
         assert!(equal_f64(a.cofactor(0, 0), 690.0));
@@ -444,10 +505,7 @@ mod tests {
     #[test]
     fn test_an_invertible_matrix_for_invertibility() {
         let a = Matrix::new(&[
-                            6.0, 4.0, 4.0, 4.0,
-                            5.0, 5.0, 7.0, 6.0,
-                            4.0, -9.0, 3.0, -7.0,
-                            9.0, 1.0, 7.0, -6.0,
+            6.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 6.0, 4.0, -9.0, 3.0, -7.0, 9.0, 1.0, 7.0, -6.0,
         ]);
 
         assert!(equal_f64(a.determinant(), -2120.0));
@@ -457,10 +515,7 @@ mod tests {
     #[test]
     fn test_a_noninvertible_matrix_for_invertibility() {
         let a = Matrix::new(&[
-                            -4.0, 2.0, -2.0, -3.0,
-                            9.0, 6.0, 2.0, 6.0,
-                            0.0, -5.0, 1.0, -5.0,
-                            0.0, 0.0, 0.0, 0.0,
+            -4.0, 2.0, -2.0, -3.0, 9.0, 6.0, 2.0, 6.0, 0.0, -5.0, 1.0, -5.0, 0.0, 0.0, 0.0, 0.0,
         ]);
 
         assert!(equal_f64(a.determinant(), 0.0));
@@ -470,77 +525,65 @@ mod tests {
     #[test]
     fn test_inverting_a_matrix() {
         let a = Matrix::new(&[
-                            -5.0, 2.0, 6.0, -8.0,
-                            1.0, -5.0, 1.0, 8.0,
-                            7.0, 7.0, -6.0, -7.0,
-                            1.0, -3.0, 7.0, 4.0,
+            -5.0, 2.0, 6.0, -8.0, 1.0, -5.0, 1.0, 8.0, 7.0, 7.0, -6.0, -7.0, 1.0, -3.0, 7.0, 4.0,
         ]);
         let b = a.inverse().unwrap();
 
         assert!(equal_f64(a.determinant(), 532.0));
         assert!(equal_f64(a.cofactor(2, 3), -160.0));
-        assert!(equal_f64(b.at(3, 2), -160.0/532.0));
+        assert!(equal_f64(b.at(3, 2), -160.0 / 532.0));
         assert!(equal_f64(a.cofactor(3, 2), 105.0));
-        assert!(equal_f64(b.at(2, 3), 105.0/532.0));
-        assert_eq!(b, Matrix::new(&[
-                                  0.21805, 0.45113, 0.24060, -0.04511,
-                                  -0.80827, -1.45677, -0.44361, 0.52068,
-                                  -0.07895, -0.22368, -0.05263, 0.19737,
-                                  -0.52256, -0.81391, -0.30075, 0.30639,
-        ]));
+        assert!(equal_f64(b.at(2, 3), 105.0 / 532.0));
+        assert_eq!(
+            b,
+            Matrix::new(&[
+                0.21805, 0.45113, 0.24060, -0.04511, -0.80827, -1.45677, -0.44361, 0.52068,
+                -0.07895, -0.22368, -0.05263, 0.19737, -0.52256, -0.81391, -0.30075, 0.30639,
+            ])
+        );
     }
 
     #[test]
     fn test_inverting_another_matrix() {
         let a = Matrix::new(&[
-                            8.0, -5.0, 9.0, 2.0,
-                            7.0, 5.0, 6.0, 1.0,
-                            -6.0, 0.0, 9.0, 6.0,
-                            -3.0, 0.0, -9.0, -4.0,
+            8.0, -5.0, 9.0, 2.0, 7.0, 5.0, 6.0, 1.0, -6.0, 0.0, 9.0, 6.0, -3.0, 0.0, -9.0, -4.0,
         ]);
 
-        assert_eq!(a.inverse(), Some(Matrix::new(&[
-                                            -0.15385, -0.15385, -0.28205, -0.53846,
-                                            -0.07692, 0.12308, 0.02564, 0.03077,
-                                            0.35897, 0.35897, 0.43590, 0.92308,
-                                            -0.69231, -0.69231, -0.76923, -1.92308,
-        ])));
+        assert_eq!(
+            a.inverse(),
+            Some(Matrix::new(&[
+                -0.15385, -0.15385, -0.28205, -0.53846, -0.07692, 0.12308, 0.02564, 0.03077,
+                0.35897, 0.35897, 0.43590, 0.92308, -0.69231, -0.69231, -0.76923, -1.92308,
+            ]))
+        );
     }
 
     #[test]
     fn test_inverting_a_third_matrix() {
         let a = Matrix::new(&[
-                            9.0, 3.0, 0.0, 9.0,
-                            -5.0, -2.0, -6.0, -3.0,
-                            -4.0, 9.0, 6.0, 4.0,
-                            -7.0, 6.0, 6.0, 2.0,
+            9.0, 3.0, 0.0, 9.0, -5.0, -2.0, -6.0, -3.0, -4.0, 9.0, 6.0, 4.0, -7.0, 6.0, 6.0, 2.0,
         ]);
 
-        assert_eq!(a.inverse(), Some(Matrix::new(&[
-                                                 -0.04074, -0.07778, 0.14444, -0.22222,
-                                                 -0.07778, 0.03333, 0.36667, -0.33333,
-                                                 -0.02901, -0.14630, -0.10926, 0.12963,
-                                                 0.17778, 0.06667, -0.26667, 0.33333,
-        ])));
+        assert_eq!(
+            a.inverse(),
+            Some(Matrix::new(&[
+                -0.04074, -0.07778, 0.14444, -0.22222, -0.07778, 0.03333, 0.36667, -0.33333,
+                -0.02901, -0.14630, -0.10926, 0.12963, 0.17778, 0.06667, -0.26667, 0.33333,
+            ]))
+        );
     }
 
     #[test]
     fn test_multiplying_a_product_by_inverse() {
         let a = Matrix::new(&[
-                            3.0, -9.0, 7.0, 3.0,
-                            3.0, -8.0, 2.0, -9.0,
-                            -4.0, 4.0, 4.0, 1.0,
-                            -6.0, 5.0, -1.0, 1.0,
+            3.0, -9.0, 7.0, 3.0, 3.0, -8.0, 2.0, -9.0, -4.0, 4.0, 4.0, 1.0, -6.0, 5.0, -1.0, 1.0,
         ]);
         let b = Matrix::new(&[
-                            8.0, 2.0, 2.0, 2.0,
-                            3.0, -1.0, 7.0, 0.0,
-                            7.0, 0.0, 5.0, 4.0,
-                            6.0, -2.0, 0.0, 5.0,
+            8.0, 2.0, 2.0, 2.0, 3.0, -1.0, 7.0, 0.0, 7.0, 0.0, 5.0, 4.0, 6.0, -2.0, 0.0, 5.0,
         ]);
 
         let c = a.clone() * b.clone();
-        
+
         assert_eq!(c * b.inverse().unwrap(), a);
     }
 
@@ -557,7 +600,10 @@ mod tests {
         let transform = Matrix::translation(5.0, -3.0, 2.0);
         let p = Tuple::point(-3.0, 4.0, 5.0);
 
-        assert_eq!(transform.inverse().unwrap() * p, Tuple::point(-8.0, 7.0, 3.0));
+        assert_eq!(
+            transform.inverse().unwrap() * p,
+            Tuple::point(-8.0, 7.0, 3.0)
+        );
     }
 
     #[test]
@@ -589,7 +635,10 @@ mod tests {
         let transform = Matrix::scaling(2.0, 3.0, 4.0);
         let v = Tuple::vector(-4.0, 6.0, 8.0);
 
-        assert_eq!(transform.inverse().unwrap() * v, Tuple::vector(-2.0, 2.0, 2.0));
+        assert_eq!(
+            transform.inverse().unwrap() * v,
+            Tuple::vector(-2.0, 2.0, 2.0)
+        );
     }
 
     #[test]
@@ -606,7 +655,10 @@ mod tests {
         let half_quarter = Matrix::rotation_x(PI / 4.0);
         let full_quarter = Matrix::rotation_x(PI / 2.0);
 
-        assert_eq!(half_quarter * p.clone(), Tuple::point(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
+        assert_eq!(
+            half_quarter * p.clone(),
+            Tuple::point(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
+        );
         assert_eq!(full_quarter * p, Tuple::point(0.0, 0.0, 1.0));
     }
 
@@ -615,7 +667,10 @@ mod tests {
         let p = Tuple::point(0.0, 1.0, 0.0);
         let half_quarter = Matrix::rotation_x(PI / 4.0);
 
-        assert_eq!(half_quarter.inverse().unwrap() * p, Tuple::point(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0));
+        assert_eq!(
+            half_quarter.inverse().unwrap() * p,
+            Tuple::point(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0)
+        );
     }
 
     #[test]
@@ -624,7 +679,10 @@ mod tests {
         let half_quarter = Matrix::rotation_y(PI / 4.0);
         let full_quarter = Matrix::rotation_y(PI / 2.0);
 
-        assert_eq!(half_quarter * p.clone(), Tuple::point(2.0_f64.sqrt() / 2.0, 0.0, 2.0_f64.sqrt() / 2.0));
+        assert_eq!(
+            half_quarter * p.clone(),
+            Tuple::point(2.0_f64.sqrt() / 2.0, 0.0, 2.0_f64.sqrt() / 2.0)
+        );
         assert_eq!(full_quarter * p, Tuple::point(1.0, 0.0, 0.0));
     }
 
@@ -634,7 +692,10 @@ mod tests {
         let half_quarter = Matrix::rotation_z(PI / 4.0);
         let full_quarter = Matrix::rotation_z(PI / 2.0);
 
-        assert_eq!(half_quarter * p.clone(), Tuple::point(-2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0));
+        assert_eq!(
+            half_quarter * p.clone(),
+            Tuple::point(-2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0)
+        );
         assert_eq!(full_quarter * p, Tuple::point(-1.0, 0.0, 0.0));
     }
 
@@ -714,5 +775,4 @@ mod tests {
 
         assert_eq!(t * p, Tuple::point(15.0, 0.0, 7.0));
     }
-
 }
