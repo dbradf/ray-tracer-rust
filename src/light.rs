@@ -3,7 +3,7 @@ use crate::tuple::Tuple;
 use crate::utils::equal_f64;
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PointLight {
     pub position: Tuple,
     pub intensity: Color,

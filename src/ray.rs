@@ -43,7 +43,7 @@ impl Ray {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Sphere {
     pub origin: Tuple,
     pub radii: f64,
@@ -77,6 +77,16 @@ impl Sphere {
 }
 
 #[derive(Debug, Clone)]
+pub struct Computation<'a> {
+    pub t: f64,
+    pub object: &'a Sphere,
+    pub point: Tuple,
+    pub eyev: Tuple,
+    pub normalv: Tuple,
+    pub inside: bool,
+}
+
+#[derive(Debug, Clone)]
 pub struct Intersection<'a> {
     pub t: f64,
     pub object: &'a Sphere,
@@ -85,6 +95,27 @@ pub struct Intersection<'a> {
 impl<'a> Intersection<'a> {
     pub fn new(t: f64, object: &'a Sphere) -> Intersection<'a> {
         Self { t, object }
+    }
+
+    pub fn prepare_computation(&self, ray: &Ray) -> Computation {
+        let point = ray.position(self.t);
+        let eyev = -ray.direction.clone();
+        let mut normalv = self.object.normal_at(&point);
+        let inside = if normalv.dot(&eyev) < 0.0 {
+            normalv = -normalv;
+            true
+        } else {
+            false
+        };
+
+        Computation {
+            t: self.t,
+            object: self.object,
+            point: point.clone(),
+            eyev,
+            inside,
+            normalv,
+        }
     }
 }
 
@@ -129,12 +160,21 @@ impl<'a> Intersections<'a> {
 
         lowest_index.map(|i| self.at(i))
     }
+
+    pub fn extend(&mut self, intersections: &Self) {
+        intersections.intersections.iter().for_each(|i| self.intersections.push(i.clone()));
+    }
+
+    pub fn sort(&mut self) {
+        self.intersections.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::f64::consts::PI;
+    use crate::utils::equal_f64;
 
     #[test]
     fn test_creating_and_querying_a_ray() {
@@ -444,5 +484,45 @@ mod tests {
         s.material = m.clone();
 
         assert_eq!(s.material, m);
+    }
+
+    #[test]
+    fn test_precomputing_the_state_of_an_intersection() {
+        let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
+        let shape = Sphere::new();
+        let i = Intersection::new(4.0, &shape);
+
+        let comps = i.prepare_computation(&r);
+
+        assert!(equal_f64(comps.t, i.t));
+        assert_eq!(comps.object, i.object);
+        assert_eq!(comps.point, Tuple::point(0.0, 0.0, -1.0));
+        assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn test_the_hit_when_an_intersection_occurs_on_the_outside() {
+        let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
+        let shape = Sphere::new();
+        let i = Intersection::new(4.0, &shape);
+
+        let comps = i.prepare_computation(&r);
+
+        assert_eq!(comps.inside, false);
+    }
+
+    #[test]
+    fn test_the_hit_when_an_intersection_occurs_on_the_inside() {
+        let r = Ray::new(&Tuple::point(0.0, 0.0, 0.0), &Tuple::vector(0.0, 0.0, 1.0));
+        let shape = Sphere::new();
+        let i = Intersection::new(1.0, &shape);
+
+        let comps = i.prepare_computation(&r);
+
+        assert_eq!(comps.point, Tuple::point(0.0, 0.0, 1.0));
+        assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
+        assert_eq!(comps.inside, true);
+        assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
     }
 }
