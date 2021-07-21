@@ -1,7 +1,7 @@
-use crate::light::Material;
 use crate::matrix::Matrix;
 use crate::tuple::Tuple;
 use crate::utils::EPSILON;
+use crate::shapes::Shape;
 
 #[derive(Debug, Clone)]
 pub struct Ray {
@@ -21,22 +21,11 @@ impl Ray {
         &self.origin + &(&self.direction * t)
     }
 
-    pub fn intersect<'a>(&self, s: &'a Sphere) -> Intersections<'a> {
-        let ray = self.transform(&s.transform.inverse().unwrap());
-        let sphere_to_ray = &ray.origin - &Tuple::point(0.0, 0.0, 0.0);
-        let a = ray.direction.dot(&ray.direction);
-        let b = 2.0 * ray.direction.dot(&sphere_to_ray);
-        let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
+    pub fn intersect<'a>(&self, s: &'a dyn Shape) -> Intersections<'a> {
+        let transform = s.get_transform();
+        let ray = self.transform(&transform.inverse().unwrap());
 
-        let discriminant = (b * b) - (4.0 * a * c);
-        if discriminant < 0.0 {
-            Intersections::new(vec![])
-        } else {
-            Intersections::new(vec![
-                Intersection::new((-b - discriminant.sqrt()) / (2.0 * a), s),
-                Intersection::new((-b + discriminant.sqrt()) / (2.0 * a), s),
-            ])
-        }
+        Intersections::new(s.intersect(&ray).iter().map(|i| Intersection::new(*i, s)).collect())
     }
 
     pub fn transform(&self, m: &Matrix) -> Self {
@@ -44,43 +33,10 @@ impl Ray {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Sphere {
-    pub origin: Tuple,
-    pub radii: f64,
-    pub transform: Matrix,
-    pub material: Material,
-}
-
-impl Sphere {
-    pub fn new() -> Self {
-        Self {
-            origin: Tuple::point(0.0, 0.0, 0.0),
-            radii: 1.0,
-            transform: Matrix::identify(),
-            material: Material::new(),
-        }
-    }
-
-    pub fn set_transform(&mut self, transform: &Matrix) {
-        self.transform = transform.clone();
-    }
-
-    pub fn normal_at(&self, world_point: &Tuple) -> Tuple {
-        let sphere_inverse = &self.transform.inverse().unwrap();
-        let object_point = sphere_inverse * world_point;
-        let object_normal = object_point - Tuple::point(0.0, 0.0, 0.0);
-        let world_normal = sphere_inverse.transpose() * object_normal;
-
-        Tuple::vector(world_normal.x, world_normal.y, world_normal.z).normalize()
-
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Computation<'a> {
     pub t: f64,
-    pub object: &'a Sphere,
+    pub object: &'a dyn Shape,
     pub point: Tuple,
     pub eyev: Tuple,
     pub normalv: Tuple,
@@ -88,14 +44,14 @@ pub struct Computation<'a> {
     pub over_point: Tuple,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Intersection<'a> {
     pub t: f64,
-    pub object: &'a Sphere,
+    pub object: &'a dyn Shape,
 }
 
 impl<'a> Intersection<'a> {
-    pub fn new(t: f64, object: &'a Sphere) -> Intersection<'a> {
+    pub fn new(t: f64, object: &'a dyn Shape) -> Intersection<'a> {
         Self { t, object }
     }
 
@@ -129,7 +85,7 @@ impl<'a> PartialEq for &Intersection<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Intersections<'a> {
     intersections: Vec<Intersection<'a>>,
 }
@@ -177,8 +133,8 @@ impl<'a> Intersections<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::f64::consts::PI;
     use crate::utils::{equal_f64, EPSILON};
+    use crate::shapes::Sphere;
 
     #[test]
     fn test_creating_and_querying_a_ray() {
@@ -301,7 +257,7 @@ mod tests {
 
         let i = xs.hit().unwrap();
 
-        assert_eq!(i, &i1);
+        assert!(i == &i1);
     }
 
     #[test]
@@ -313,7 +269,7 @@ mod tests {
 
         let i = xs.hit().unwrap();
 
-        assert_eq!(i, &i2);
+        assert!(i == &i2);
     }
 
     #[test]
@@ -325,7 +281,7 @@ mod tests {
 
         let i = xs.hit();
 
-        assert_eq!(i, None);
+        assert!(i.is_none());
     }
 
     #[test]
@@ -339,7 +295,7 @@ mod tests {
 
         let i = xs.hit().unwrap();
 
-        assert_eq!(i, &i4);
+        assert!(i == &i4);
     }
 
     #[test]
@@ -368,7 +324,7 @@ mod tests {
     fn test_a_spheres_default_transformation() {
         let s = Sphere::new();
 
-        assert_eq!(s.transform, Matrix::identify());
+        assert_eq!(s.get_transform(), Matrix::identify());
     }
 
     #[test]
@@ -378,7 +334,7 @@ mod tests {
 
         s.set_transform(&t);
 
-        assert_eq!(s.transform, t);
+        assert_eq!(s.get_transform(), t);
     }
 
     #[test]
@@ -405,91 +361,6 @@ mod tests {
         assert_eq!(xs.count(), 0);
     }
 
-
-    // spheres
-    #[test]
-    fn test_the_normal_sphere_at_a_point_on_the_x_axis() {
-        let s = Sphere::new();
-        
-        let n = s.normal_at(&Tuple::point(1.0, 0.0, 0.0));
-
-        assert_eq!(n, Tuple::vector(1.0, 0.0, 0.0));
-    }
-
-    #[test]
-    fn test_the_normal_sphere_at_a_point_on_the_y_axis() {
-        let s = Sphere::new();
-        
-        let n = s.normal_at(&Tuple::point(0.0, 1.0, 0.0));
-
-        assert_eq!(n, Tuple::vector(0.0, 1.0, 0.0));
-    }
-
-    #[test]
-    fn test_the_normal_sphere_at_a_point_on_the_z_axis() {
-        let s = Sphere::new();
-        
-        let n = s.normal_at(&Tuple::point(0.0, 0.0, 1.0));
-
-        assert_eq!(n, Tuple::vector(0.0, 0.0, 1.0));
-    }
-
-    #[test]
-    fn test_the_normal_sphere_at_a_point_on_a_nonaxial_point() {
-        let s = Sphere::new();
-        
-        let n = s.normal_at(&Tuple::point(3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0));
-
-        assert_eq!(n, Tuple::vector(3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0));
-    }
-
-    #[test]
-    fn test_the_normal_is_a_normalized_vector() {
-        let s = Sphere::new();
-        let n = s.normal_at(&Tuple::point(3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0));
-
-        assert_eq!(n.clone(), n.normalize());
-    }
-
-    #[test]
-    fn test_computing_the_normal_on_a_translated_sphere() {
-        let mut s = Sphere::new();
-        s.set_transform(&Matrix::translation(0.0, 1.0, 0.0));
-
-        let n = s.normal_at(&Tuple::point(0.0, 1.70711, -0.70711));
-
-        assert_eq!(n, Tuple::vector(0.0, 0.70711, -0.70711));
-    }
-
-    #[test]
-    fn test_copmuting_the_normal_on_a_transformed_sphere() {
-        let mut s = Sphere::new();
-        let m = Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotation_z(PI / 0.5);
-        s.set_transform(&m);
-
-        let n = s.normal_at(&Tuple::point(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0));
-
-        assert_eq!(n, Tuple::vector(0.0, 0.97014, -0.24254));
-    }
-
-    #[test]
-    fn test_a_sphere_has_a_default_material() {
-        let s = Sphere::new();
-
-        assert_eq!(s.material, Material::new());
-    }
-
-    #[test]
-    fn test_a_sphere_may_be_assigned_a_material() {
-        let mut s = Sphere::new();
-        let mut m = Material::new();
-        m.ambient = 1.0;
-
-        s.material = m.clone();
-
-        assert_eq!(s.material, m);
-    }
-
     #[test]
     fn test_precomputing_the_state_of_an_intersection() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
@@ -499,7 +370,7 @@ mod tests {
         let comps = i.prepare_computation(&r);
 
         assert!(equal_f64(comps.t, i.t));
-        assert_eq!(comps.object, i.object);
+        assert!(std::ptr::eq(comps.object,  i.object));
         assert_eq!(comps.point, Tuple::point(0.0, 0.0, -1.0));
         assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
         assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
@@ -534,7 +405,7 @@ mod tests {
     fn test_the_hit_should_offset_the_point() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
         let mut shape = Sphere::new();
-        shape.transform = Matrix::translation(0.0, 0.0, 1.0);
+        shape.set_transform(&Matrix::translation(0.0, 0.0, 1.0));
         let i = Intersection::new(5.0, &shape);
         
         let comps = i.prepare_computation(&r);

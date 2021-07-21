@@ -1,7 +1,8 @@
 use ray_tracer::canvas::{Canvas, Color};
 use ray_tracer::light::{Material, PointLight, lighting};
 use ray_tracer::matrix::Matrix;
-use ray_tracer::ray::{Ray, Sphere};
+use ray_tracer::ray::Ray;
+use ray_tracer::shapes::{Sphere, Shape};
 use ray_tracer::tuple::Tuple;
 use std::f64::consts::PI;
 
@@ -21,8 +22,9 @@ fn main() {
     // shape.set_transform(
       //  &(Matrix::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0) * Matrix::scaling(0.5, 1.0, 1.0)),
     //);
-    shape.material = Material::new();
-    shape.material.color = Color::new(1.0, 0.2, 1.0);
+    let mut shape_m = Material::new();
+    shape_m.color = Color::new(1.0, 0.2, 1.0);
+    shape.set_material(&shape_m);
 
     let light_position = Tuple::point(-10.0, 10.0, -10.0);
     let light_color = Color::white();
@@ -42,7 +44,7 @@ fn main() {
                 let point = r.position(hit.t);
                 let normal = hit.object.normal_at(&point);
                 let eye = -r.direction;
-                let color = lighting(&hit.object.material, &light, &point, &eye, &normal, false);
+                let color = lighting(&hit.object.get_material(), &light, &point, &eye, &normal, false);
 
                 canvas.write_pixel(x, y, &color);
             }

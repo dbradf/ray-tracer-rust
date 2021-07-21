@@ -1,8 +1,9 @@
 use crate::tuple::Tuple;
-use crate::light::{PointLight, Material, lighting};
+use crate::light::{PointLight, lighting, Material};
 use crate::canvas::Color;
-use crate::ray::{Sphere, Ray, Intersections, Intersection, Computation};
+use crate::ray::{Ray, Intersections, Intersection, Computation};
 use crate::matrix::Matrix;
+use crate::shapes::{Sphere, Shape};
 
 #[derive(Debug, Clone)]
 pub struct World {
@@ -21,9 +22,11 @@ impl World {
     pub fn default_world() -> Self {
         let light = PointLight::new(&Tuple::point(-10.0, 10.0, -10.0), &Color::white());
         let mut s1 = Sphere::new();
-        s1.material.color = Color::new(0.8, 1.0, 0.6);
-        s1.material.diffuse = 0.7;
-        s1.material.specular = 0.2;
+        let mut m = Material::new();
+        m.color = Color::new(0.8, 1.0, 0.6);
+        m.diffuse = 0.7;
+        m.specular = 0.2;
+        s1.set_material(&m);
         let mut s2 = Sphere::new();
         s2.set_transform(&Matrix::scaling(0.5, 0.5, 0.5));
 
@@ -44,7 +47,7 @@ impl World {
 
         let mut intersections = ray.intersect(&self.objects[0]);
         for o in &self.objects[1..] {
-            intersections.extend(&ray.intersect(&o));
+            intersections.extend(&ray.intersect(o));
         }
 
         intersections.sort();
@@ -54,7 +57,7 @@ impl World {
     pub fn shade_hit(&self, comps: &Computation) -> Color {
         if let Some(light) = &self.light {
             let is_shadowed = self.is_shadowed(&comps.over_point);
-            lighting(&comps.object.material, light, &comps.point, &comps.eyev, &comps.normalv, is_shadowed)
+            lighting(&comps.object.get_material(), light, &comps.point, &comps.eyev, &comps.normalv, is_shadowed)
         } else {
             Color::black()
         }
@@ -106,9 +109,11 @@ mod tests {
     fn test_the_default_world() {
         let light = PointLight::new(&Tuple::point(-10.0, 10.0, -10.0), &Color::white());
         let mut s1 = Sphere::new();
-        s1.material.color = Color::new(0.8, 1.0, 0.6);
-        s1.material.diffuse = 0.7;
-        s1.material.specular = 0.2;
+        let mut m = Material::new();
+        m.color = Color::new(0.8, 1.0, 0.6);
+        m.diffuse = 0.7;
+        m.specular = 0.2;
+        s1.set_material(&m);
         let mut s2 = Sphere::new();
         s2.set_transform(&Matrix::scaling(0.5, 0.5, 0.5));
 
@@ -182,13 +187,15 @@ mod tests {
     #[test]
     fn test_the_color_with_an_intersection_behind_the_ray() {
         let mut w = World::default_world();
-        w.objects[0].material.ambient = 1.0;
-        w.objects[1].material.ambient = 1.0;
+        let mut m = Material::new();
+        m.ambient = 1.0;
+        w.objects[0].set_material(&m);
+        w.objects[1].set_material(&m);
         let r = Ray::new(&Tuple::point(0.0, 0.0, 0.75), &Tuple::vector(0.0, 0.0, -1.0));
 
         let c = w.color_at(&r);
 
-        assert_eq!(c, w.objects[1].material.color);
+        assert_eq!(c, w.objects[1].get_material().color);
     }
 
     #[test]
@@ -229,7 +236,7 @@ mod tests {
         w.light = Some(PointLight::new(&Tuple::point(0.0, 0.0, -10.0), &Color::white()));
         let s1 = Sphere::new();
         let mut s2 = Sphere::new();
-        s2.transform = Matrix::translation(0.0, 0.0, 10.0);
+        s2.set_transform(&Matrix::translation(0.0, 0.0, 10.0));
         w.objects = vec![s1, s2.clone()];
         let r = Ray::new(&Tuple::point(0.0, 0.0, 5.0), &Tuple::vector(0.0, 0.0, 1.0));
         let i = Intersection::new(4.0, &s2);
