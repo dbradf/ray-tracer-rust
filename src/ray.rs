@@ -1,6 +1,7 @@
 use crate::light::Material;
 use crate::matrix::Matrix;
 use crate::tuple::Tuple;
+use crate::utils::EPSILON;
 
 #[derive(Debug, Clone)]
 pub struct Ray {
@@ -84,6 +85,7 @@ pub struct Computation<'a> {
     pub eyev: Tuple,
     pub normalv: Tuple,
     pub inside: bool,
+    pub over_point: Tuple,
 }
 
 #[derive(Debug, Clone)]
@@ -107,6 +109,7 @@ impl<'a> Intersection<'a> {
         } else {
             false
         };
+        let over_point = point.clone() + normalv.clone() * EPSILON;
 
         Computation {
             t: self.t,
@@ -115,6 +118,7 @@ impl<'a> Intersection<'a> {
             eyev,
             inside,
             normalv,
+            over_point,
         }
     }
 }
@@ -174,7 +178,7 @@ impl<'a> Intersections<'a> {
 mod tests {
     use super::*;
     use std::f64::consts::PI;
-    use crate::utils::equal_f64;
+    use crate::utils::{equal_f64, EPSILON};
 
     #[test]
     fn test_creating_and_querying_a_ray() {
@@ -524,5 +528,18 @@ mod tests {
         assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
         assert_eq!(comps.inside, true);
         assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn test_the_hit_should_offset_the_point() {
+        let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
+        let mut shape = Sphere::new();
+        shape.transform = Matrix::translation(0.0, 0.0, 1.0);
+        let i = Intersection::new(5.0, &shape);
+        
+        let comps = i.prepare_computation(&r);
+
+        assert!(comps.over_point.z < -EPSILON / 2.0);
+        assert!(comps.point.z > comps.over_point.z);
     }
 }

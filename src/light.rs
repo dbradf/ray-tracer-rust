@@ -49,7 +49,7 @@ impl std::cmp::PartialEq for Material {
     }
 }
 
-pub fn lighting(material: &Material, light: &PointLight, point: &Tuple, eyev: &Tuple, normalv: &Tuple) -> Color {
+pub fn lighting(material: &Material, light: &PointLight, point: &Tuple, eyev: &Tuple, normalv: &Tuple, in_shadown: bool) -> Color {
     let effective_color = material.color * light.intensity;
     let lightv = (light.position.clone() - point.clone()).normalize();
     let ambient = effective_color * material.ambient;
@@ -68,7 +68,11 @@ pub fn lighting(material: &Material, light: &PointLight, point: &Tuple, eyev: &T
         }
     };
 
-    ambient + diffuse + specular
+    if in_shadown {
+        ambient
+    } else {
+        ambient + diffuse + specular
+    }
 }
 
 #[cfg(test)]
@@ -106,7 +110,7 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(&Tuple::point(0.0, 0.0, -10.0), &Color::new(1.0, 1.0, 1.0));
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, false);
 
         assert_eq!(result, Color::new(1.9, 1.9, 1.9));
     }
@@ -120,7 +124,7 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(&Tuple::point(0.0, 0.0, -10.0), &Color::new(1.0, 1.0, 1.0));
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, false);
 
         assert_eq!(result, Color::new(1.0, 1.0, 1.0));
     }
@@ -134,7 +138,7 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(&Tuple::point(0.0, 10.0, -10.0), &Color::new(1.0, 1.0, 1.0));
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, false);
 
         assert_eq!(result, Color::new(0.7364, 0.7364, 0.7364));
     }
@@ -148,7 +152,7 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(&Tuple::point(0.0, 10.0, -10.0), &Color::new(1.0, 1.0, 1.0));
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, false);
 
         assert_eq!(result, Color::new(1.6364, 1.6364, 1.6364));
     }
@@ -162,7 +166,22 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(&Tuple::point(0.0, 0.0, 10.0), &Color::new(1.0, 1.0, 1.0));
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, false,);
+
+        assert_eq!(result, Color::new(0.1, 0.1, 0.1));
+    }
+
+    #[test]
+    fn test_lighting_with_the_surface_in_shadow() {
+        let m = Material::new();
+        let position = Tuple::point(0.0, 0.0, 0.0);
+
+        let eyev = Tuple::vector(0.0, 0.0, -1.0);
+        let normalv = Tuple::vector(0.0, 0.0, -1.0);
+        let light = PointLight::new(&Tuple::point(0.0, 0.0, -10.0), &Color::white());
+        let in_shadow = true;
+
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
 
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }

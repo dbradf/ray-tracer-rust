@@ -1,4 +1,4 @@
-const EPSILON: f64 = 0.00001;
+pub const EPSILON: f64 = 0.00001;
 
 pub fn equal_f64(x: f64, y: f64) -> bool {
     if (x - y).abs() < EPSILON {
