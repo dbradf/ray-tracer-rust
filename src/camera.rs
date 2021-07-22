@@ -1,7 +1,7 @@
-use crate::matrix::Matrix;
-use crate::tuple::Tuple;
-use crate::ray::Ray;
 use crate::canvas::Canvas;
+use crate::matrix::Matrix;
+use crate::ray::Ray;
+use crate::tuple::Tuple;
 use crate::world::World;
 
 #[derive(Debug, Clone)]
@@ -72,11 +72,11 @@ impl Camera {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::f64::consts::PI;
-    use crate::utils::equal_f64;
-    use crate::transformations::view_transform;
-    use crate::world::World;
     use crate::canvas::Color;
+    use crate::transformations::view_transform;
+    use crate::utils::equal_f64;
+    use crate::world::World;
+    use std::f64::consts::PI;
 
     #[test]
     fn test_contructing_a_camera() {
@@ -131,7 +131,10 @@ mod tests {
         let r = c.ray_for_pixel(100, 50);
 
         assert_eq!(r.origin, Tuple::point(0.0, 2.0, -5.0));
-        assert_eq!(r.direction, Tuple::vector(2.0_f64.sqrt() / 2.0, 0.0, -2.0_f64.sqrt() / 2.0));
+        assert_eq!(
+            r.direction,
+            Tuple::vector(2.0_f64.sqrt() / 2.0, 0.0, -2.0_f64.sqrt() / 2.0)
+        );
     }
 
     #[test]
@@ -139,7 +142,7 @@ mod tests {
         let w = World::default_world();
         let mut c = Camera::new(11, 11, PI / 2.0);
         let from = Tuple::point(0.0, 0.0, -5.0);
-        let to = Tuple::point(0.0, 0.0,  0.0);
+        let to = Tuple::point(0.0, 0.0, 0.0);
         let up = Tuple::vector(0.0, 1.0, 0.0);
         c.transform = view_transform(&from, &to, &up);
 
@@ -148,4 +151,3 @@ mod tests {
         assert_eq!(image.pixel_at(5, 5), &Color::new(0.38066, 0.47583, 0.2855));
     }
 }
-

@@ -1,5 +1,5 @@
-use crate::tuple::Tuple;
 use crate::matrix::Matrix;
+use crate::tuple::Tuple;
 
 pub fn view_transform(from: &Tuple, to: &Tuple, up: &Tuple) -> Matrix {
     let forward = (to - from).normalize();
@@ -8,10 +8,8 @@ pub fn view_transform(from: &Tuple, to: &Tuple, up: &Tuple) -> Matrix {
     let true_up = left.cross(&forward);
 
     let orientation = Matrix::new(&[
-                                  left.x, left.y, left.z, 0.0,
-                                  true_up.x, true_up.y, true_up.z, 0.0,
-                                  -forward.x, -forward.y, -forward.z, 0.0,
-                                  0.0, 0.0, 0.0, 1.0,
+        left.x, left.y, left.z, 0.0, true_up.x, true_up.y, true_up.z, 0.0, -forward.x, -forward.y,
+        -forward.z, 0.0, 0.0, 0.0, 0.0, 1.0,
     ]);
 
     orientation * Matrix::translation(-from.x, -from.y, -from.z)
@@ -62,12 +60,12 @@ mod tests {
 
         let t = view_transform(&from, &to, &up);
 
-        assert_eq!(t, Matrix::new(&[
-                                  -0.50709, 0.50709, 0.67612, -2.36643,
-                                  0.76772, 0.60609, 0.12122, -2.82843,
-                                  -0.35857, 0.59761, -0.71714, 0.0,
-                                  0.0, 0.0, 0.0, 1.0,
-        ]));
+        assert_eq!(
+            t,
+            Matrix::new(&[
+                -0.50709, 0.50709, 0.67612, -2.36643, 0.76772, 0.60609, 0.12122, -2.82843,
+                -0.35857, 0.59761, -0.71714, 0.0, 0.0, 0.0, 0.0, 1.0,
+            ])
+        );
     }
 }
-

@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
+use crate::shapes::Shape;
 use crate::tuple::Tuple;
 use crate::utils::EPSILON;
-use crate::shapes::Shape;
 use std::rc::Rc;
 
 #[derive(Debug, Clone)]
@@ -26,7 +26,12 @@ impl Ray {
         let transform = s.get_transform();
         let ray = self.transform(&transform.inverse().unwrap());
 
-        Intersections::new(s.intersect(&ray).iter().map(|i| Intersection::new(*i, s.clone())).collect())
+        Intersections::new(
+            s.intersect(&ray)
+                .iter()
+                .map(|i| Intersection::new(*i, s.clone()))
+                .collect(),
+        )
     }
 
     pub fn transform(&self, m: &Matrix) -> Self {
@@ -53,7 +58,10 @@ pub struct Intersection {
 
 impl Intersection {
     pub fn new(t: f64, object: Rc<dyn Shape>) -> Intersection {
-        Self { t, object: object.clone() }
+        Self {
+            t,
+            object: object.clone(),
+        }
     }
 
     pub fn prepare_computation(&self, ray: &Ray) -> Computation {
@@ -123,19 +131,23 @@ impl Intersections {
     }
 
     pub fn extend(&mut self, intersections: &Self) {
-        intersections.intersections.iter().for_each(|i| self.intersections.push(i.clone()));
+        intersections
+            .intersections
+            .iter()
+            .for_each(|i| self.intersections.push(i.clone()));
     }
 
     pub fn sort(&mut self) {
-        self.intersections.sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
+        self.intersections
+            .sort_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::{equal_f64, EPSILON};
     use crate::shapes::Sphere;
+    use crate::utils::{equal_f64, EPSILON};
 
     #[test]
     fn test_creating_and_querying_a_ray() {
@@ -369,7 +381,7 @@ mod tests {
         let comps = i.prepare_computation(&r);
 
         assert!(equal_f64(comps.t, i.t));
-        assert!(std::ptr::eq(comps.object.as_ref(),  i.object.as_ref()));
+        assert!(std::ptr::eq(comps.object.as_ref(), i.object.as_ref()));
         assert_eq!(comps.point, Tuple::point(0.0, 0.0, -1.0));
         assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
         assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
@@ -405,7 +417,7 @@ mod tests {
         let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
         let shape = Rc::new(Sphere::new().with_transform(&Matrix::translation(0.0, 0.0, 1.0)));
         let i = Intersection::new(5.0, shape.clone());
-        
+
         let comps = i.prepare_computation(&r);
 
         assert!(comps.over_point.z < -EPSILON / 2.0);

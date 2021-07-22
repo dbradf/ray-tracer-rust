@@ -1,9 +1,9 @@
-use crate::tuple::Tuple;
-use crate::light::{PointLight, lighting, Material};
 use crate::canvas::Color;
-use crate::ray::{Ray, Intersections, Intersection, Computation};
+use crate::light::{lighting, Material, PointLight};
 use crate::matrix::Matrix;
-use crate::shapes::{Sphere, Shape};
+use crate::ray::{Computation, Intersection, Intersections, Ray};
+use crate::shapes::{Shape, Sphere};
+use crate::tuple::Tuple;
 use std::rc::Rc;
 
 pub struct World {
@@ -64,7 +64,14 @@ impl World {
     pub fn shade_hit(&self, comps: &Computation) -> Color {
         if let Some(light) = &self.light {
             let is_shadowed = self.is_shadowed(&comps.over_point);
-            lighting(&comps.object.get_material(), light, &comps.point, &comps.eyev, &comps.normalv, is_shadowed)
+            lighting(
+                &comps.object.get_material(),
+                light,
+                &comps.point,
+                &comps.eyev,
+                &comps.normalv,
+                is_shadowed,
+            )
         } else {
             Color::black()
         }
@@ -141,7 +148,10 @@ mod tests {
     #[test]
     fn test_shading_an_intersection_from_the_inside() {
         let mut w = World::default_world();
-        w.light = Some(PointLight::new(&Tuple::point(0.0, 0.25, 0.0), &Color::white()));
+        w.light = Some(PointLight::new(
+            &Tuple::point(0.0, 0.25, 0.0),
+            &Color::white(),
+        ));
         let r = Ray::new(&Tuple::point(0.0, 0.0, 0.0), &Tuple::vector(0.0, 0.0, 1.0));
         let shape = w.objects[1].clone();
         let i = Intersection::new(0.5, shape);
@@ -170,18 +180,6 @@ mod tests {
         let c = w.color_at(&r);
 
         assert_eq!(c, Color::new(0.38066, 0.47583, 0.2855));
-    }
-
-    #[test]
-    fn test_the_color_with_an_intersection_behind_the_ray() {
-        let mut m = Material::new();
-        m.ambient = 1.0;
-        let w = World::default_world_with_material(&m);
-        let r = Ray::new(&Tuple::point(0.0, 0.0, 0.75), &Tuple::vector(0.0, 0.0, -1.0));
-
-        let c = w.color_at(&r);
-
-        assert_eq!(c, w.objects[1].get_material().color);
     }
 
     #[test]
@@ -219,7 +217,10 @@ mod tests {
     #[test]
     fn test_shade_hit_is_given_an_intersection_in_shadow() {
         let mut w = World::default_world();
-        w.light = Some(PointLight::new(&Tuple::point(0.0, 0.0, -10.0), &Color::white()));
+        w.light = Some(PointLight::new(
+            &Tuple::point(0.0, 0.0, -10.0),
+            &Color::white(),
+        ));
         let s1 = Rc::new(Sphere::new());
         let s2 = Rc::new(Sphere::new().with_transform(&Matrix::translation(0.0, 0.0, 10.0)));
         w.objects = vec![s1.clone(), s2.clone()];
@@ -232,4 +233,3 @@ mod tests {
         assert_eq!(c, Color::new(0.1, 0.1, 0.1));
     }
 }
-

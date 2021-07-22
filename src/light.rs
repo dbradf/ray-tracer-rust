@@ -2,7 +2,6 @@ use crate::canvas::Color;
 use crate::tuple::Tuple;
 use crate::utils::equal_f64;
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct PointLight {
     pub position: Tuple,
@@ -18,7 +17,7 @@ impl PointLight {
     }
 }
 
-#[derive(Debug, Clone)] 
+#[derive(Debug, Clone)]
 pub struct Material {
     pub color: Color,
     pub ambient: f64,
@@ -41,7 +40,7 @@ impl Material {
 
 impl std::cmp::PartialEq for Material {
     fn eq(&self, other: &Self) -> bool {
-        self.color == other.color 
+        self.color == other.color
             && self.ambient == other.ambient
             && self.diffuse == other.diffuse
             && self.specular == other.specular
@@ -49,7 +48,14 @@ impl std::cmp::PartialEq for Material {
     }
 }
 
-pub fn lighting(material: &Material, light: &PointLight, point: &Tuple, eyev: &Tuple, normalv: &Tuple, in_shadown: bool) -> Color {
+pub fn lighting(
+    material: &Material,
+    light: &PointLight,
+    point: &Tuple,
+    eyev: &Tuple,
+    normalv: &Tuple,
+    in_shadown: bool,
+) -> Color {
     let effective_color = material.color * light.intensity;
     let lightv = (light.position.clone() - point.clone()).normalize();
     let ambient = effective_color * material.ambient;
@@ -93,7 +99,7 @@ mod tests {
     #[test]
     fn test_the_default_material() {
         let m = Material::new();
-         
+
         assert_eq!(m.color, Color::new(1.0, 1.0, 1.0));
         assert!(equal_f64(m.ambient, 0.1));
         assert!(equal_f64(m.diffuse, 0.9));
@@ -166,7 +172,7 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(&Tuple::point(0.0, 0.0, 10.0), &Color::new(1.0, 1.0, 1.0));
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv, false,);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, false);
 
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }
@@ -186,4 +192,3 @@ mod tests {
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }
 }
-

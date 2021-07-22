@@ -1,7 +1,7 @@
+use crate::light::Material;
+use crate::matrix::Matrix;
 use crate::ray::Ray;
 use crate::tuple::Tuple;
-use crate::matrix::Matrix;
-use crate::light::Material;
 use crate::utils::EPSILON;
 use std::fmt::Debug;
 
@@ -23,7 +23,6 @@ pub trait Shape {
         let world_normal = shape_inverse.transpose() * local_normal;
 
         Tuple::vector(world_normal.x, world_normal.y, world_normal.z).normalize()
-
     }
 }
 
@@ -150,7 +149,7 @@ impl Shape for Sphere {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)] 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Plane {
     transform: Matrix,
     material: Material,
@@ -233,7 +232,7 @@ mod tests {
     #[test]
     fn test_the_default_material() {
         let s = TestShape::new();
-        
+
         assert_eq!(s.get_material(), Material::new());
     }
 
@@ -262,7 +261,11 @@ mod tests {
         let mut s = TestShape::new();
         let m = Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotation_z(PI / 5.0);
         s.set_transform(&m);
-        let n = s.normal_at(&Tuple::point(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0));
+        let n = s.normal_at(&Tuple::point(
+            0.0,
+            2.0_f64.sqrt() / 2.0,
+            -2.0_f64.sqrt() / 2.0,
+        ));
 
         assert_eq!(n, Tuple::vector(0.0, 0.97014, -0.24254));
     }
@@ -271,7 +274,7 @@ mod tests {
     #[test]
     fn test_the_normal_sphere_at_a_point_on_the_x_axis() {
         let s = Sphere::new();
-        
+
         let n = s.normal_at(&Tuple::point(1.0, 0.0, 0.0));
 
         assert_eq!(n, Tuple::vector(1.0, 0.0, 0.0));
@@ -280,7 +283,7 @@ mod tests {
     #[test]
     fn test_the_normal_sphere_at_a_point_on_the_y_axis() {
         let s = Sphere::new();
-        
+
         let n = s.normal_at(&Tuple::point(0.0, 1.0, 0.0));
 
         assert_eq!(n, Tuple::vector(0.0, 1.0, 0.0));
@@ -289,7 +292,7 @@ mod tests {
     #[test]
     fn test_the_normal_sphere_at_a_point_on_the_z_axis() {
         let s = Sphere::new();
-        
+
         let n = s.normal_at(&Tuple::point(0.0, 0.0, 1.0));
 
         assert_eq!(n, Tuple::vector(0.0, 0.0, 1.0));
@@ -298,16 +301,31 @@ mod tests {
     #[test]
     fn test_the_normal_sphere_at_a_point_on_a_nonaxial_point() {
         let s = Sphere::new();
-        
-        let n = s.normal_at(&Tuple::point(3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0));
 
-        assert_eq!(n, Tuple::vector(3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0));
+        let n = s.normal_at(&Tuple::point(
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+        ));
+
+        assert_eq!(
+            n,
+            Tuple::vector(
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0
+            )
+        );
     }
 
     #[test]
     fn test_the_normal_is_a_normalized_vector() {
         let s = Sphere::new();
-        let n = s.normal_at(&Tuple::point(3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0, 3.0_f64.sqrt() / 3.0));
+        let n = s.normal_at(&Tuple::point(
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+        ));
 
         assert_eq!(n.clone(), n.normalize());
     }
@@ -328,7 +346,11 @@ mod tests {
         let m = Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotation_z(PI / 0.5);
         s.set_transform(&m);
 
-        let n = s.normal_at(&Tuple::point(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0));
+        let n = s.normal_at(&Tuple::point(
+            0.0,
+            2.0_f64.sqrt() / 2.0,
+            -2.0_f64.sqrt() / 2.0,
+        ));
 
         assert_eq!(n, Tuple::vector(0.0, 0.97014, -0.24254));
     }
@@ -355,9 +377,18 @@ mod tests {
     #[test]
     fn test_the_normal_of_a_plane_is_constant_everywhere() {
         let p = Plane::new();
-        assert_eq!(p.local_normal_at(&Tuple::point(0.0, 0.0, 0.0)), Tuple::vector(0.0, 1.0, 0.0));
-        assert_eq!(p.local_normal_at(&Tuple::point(10.0, 0.0, -10.0)), Tuple::vector(0.0, 1.0, 0.0));
-        assert_eq!(p.local_normal_at(&Tuple::point(-5.0, 0.0, 150.0)), Tuple::vector(0.0, 1.0, 0.0));
+        assert_eq!(
+            p.local_normal_at(&Tuple::point(0.0, 0.0, 0.0)),
+            Tuple::vector(0.0, 1.0, 0.0)
+        );
+        assert_eq!(
+            p.local_normal_at(&Tuple::point(10.0, 0.0, -10.0)),
+            Tuple::vector(0.0, 1.0, 0.0)
+        );
+        assert_eq!(
+            p.local_normal_at(&Tuple::point(-5.0, 0.0, 150.0)),
+            Tuple::vector(0.0, 1.0, 0.0)
+        );
     }
 
     #[test]
@@ -401,8 +432,4 @@ mod tests {
         assert_eq!(xs.len(), 1);
         assert_eq!(xs[0], 1.0);
     }
-
-
-
 }
-
