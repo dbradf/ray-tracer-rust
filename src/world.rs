@@ -4,11 +4,11 @@ use crate::matrix::Matrix;
 use crate::ray::{Computation, Intersection, Intersections, Ray};
 use crate::shapes::{Shape, Sphere};
 use crate::tuple::Tuple;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct World {
     pub light: Option<PointLight>,
-    pub objects: Vec<Rc<dyn Shape>>,
+    pub objects: Vec<Arc<dyn Shape + Send + Sync>>,
 }
 
 impl World {
@@ -29,8 +29,8 @@ impl World {
 
     pub fn default_world_with_material(material: &Material) -> Self {
         let light = PointLight::new(&Tuple::point(-10.0, 10.0, -10.0), &Color::white());
-        let s1 = Rc::new(Sphere::new().with_material(material));
-        let s2 = Rc::new(Sphere::new().with_transform(&Matrix::scaling(0.5, 0.5, 0.5)));
+        let s1 = Arc::new(Sphere::new().with_material(material));
+        let s2 = Arc::new(Sphere::new().with_transform(&Matrix::scaling(0.5, 0.5, 0.5)));
 
         Self {
             light: Some(light),
@@ -38,9 +38,9 @@ impl World {
         }
     }
 
-    pub fn contains(&self, object: Rc<dyn Shape>) -> bool {
+    pub fn contains(&self, object: Arc<dyn Shape + Send + Sync>) -> bool {
         for o in &self.objects {
-            if Rc::ptr_eq(o, &object) {
+            if Arc::ptr_eq(o, &object) {
                 return true;
             }
         }
@@ -221,8 +221,8 @@ mod tests {
             &Tuple::point(0.0, 0.0, -10.0),
             &Color::white(),
         ));
-        let s1 = Rc::new(Sphere::new());
-        let s2 = Rc::new(Sphere::new().with_transform(&Matrix::translation(0.0, 0.0, 10.0)));
+        let s1 = Arc::new(Sphere::new());
+        let s2 = Arc::new(Sphere::new().with_transform(&Matrix::translation(0.0, 0.0, 10.0)));
         w.objects = vec![s1.clone(), s2.clone()];
         let r = Ray::new(&Tuple::point(0.0, 0.0, 5.0), &Tuple::vector(0.0, 0.0, 1.0));
         let i = Intersection::new(4.0, s2);

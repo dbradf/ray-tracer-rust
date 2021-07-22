@@ -7,13 +7,13 @@ use ray_tracer::transformations::view_transform;
 use ray_tracer::tuple::Tuple;
 use ray_tracer::world::World;
 use std::f64::consts::PI;
-use std::rc::Rc;
+use std::sync::Arc;
 
 fn main() {
     let mut floor_m = Material::new();
     floor_m.color = Color::new(0.97, 0.96, 0.94);
     floor_m.specular = 0.0;
-    let floor = Rc::new(
+    let floor = Arc::new(
         Plane::new()
             .with_material(&floor_m)
             .with_transform(&Matrix::translation(0.0, 0.0, 0.0)),
@@ -23,7 +23,7 @@ fn main() {
     middle_m.color = Color::new(0.65, 0.8, 0.83);
     middle_m.diffuse = 0.7;
     middle_m.specular = 0.3;
-    let middle = Rc::new(
+    let middle = Arc::new(
         Sphere::new()
             .with_material(&middle_m)
             .with_transform(&Matrix::translation(-0.5, 1.0, 0.5)),
@@ -34,7 +34,7 @@ fn main() {
     right_m.diffuse = 0.7;
     right_m.specular = 0.3;
     let right =
-        Rc::new(Sphere::new().with_material(&right_m).with_transform(
+        Arc::new(Sphere::new().with_material(&right_m).with_transform(
             &(Matrix::translation(1.5, 0.5, -0.5) * Matrix::scaling(0.5, 0.5, 0.5)),
         ));
 
@@ -42,7 +42,7 @@ fn main() {
     left_m.color = Color::new(0.3, 0.3, 0.35);
     left_m.diffuse = 0.7;
     left_m.specular = 0.3;
-    let left = Rc::new(Sphere::new().with_material(&left_m).with_transform(
+    let left = Arc::new(Sphere::new().with_material(&left_m).with_transform(
         &(Matrix::translation(-1.5, 0.33, -0.75) * Matrix::scaling(0.33, 0.33, 0.33)),
     ));
 

@@ -1,8 +1,9 @@
-use crate::canvas::Canvas;
+use crate::canvas::{Canvas, Color};
 use crate::matrix::Matrix;
 use crate::ray::Ray;
 use crate::tuple::Tuple;
 use crate::world::World;
+use rayon::prelude::*;
 
 #[derive(Debug, Clone)]
 pub struct Camera {
@@ -57,13 +58,24 @@ impl Camera {
     pub fn render(&self, world: &World) -> Canvas {
         let mut image = Canvas::new(self.hsize, self.vsize);
 
-        for y in 0..self.vsize {
-            for x in 0..self.hsize {
+        let n_pixels = self.hsize * self.vsize;
+        let pixels: Vec<Color> = (0..n_pixels)
+            .into_par_iter()
+            .map(|i| {
+                let x = i % self.hsize;
+                let y = i / self.hsize;
+
                 let ray = self.ray_for_pixel(x, y);
-                let color = world.color_at(&ray);
-                image.write_pixel(x, y, &color);
-            }
-        }
+                world.color_at(&ray)
+            })
+            .collect();
+
+        pixels.iter().enumerate().for_each(|(i, c)| {
+            let x = i % self.hsize;
+            let y = i / self.hsize;
+
+            image.write_pixel(x, y, c);
+        });
 
         image
     }
