@@ -2,6 +2,8 @@ use crate::ray::Ray;
 use crate::tuple::Tuple;
 use crate::matrix::Matrix;
 use crate::light::Material;
+use crate::utils::EPSILON;
+use std::fmt::Debug;
 
 pub trait Shape {
     fn get_transform(&self) -> Matrix;
@@ -25,7 +27,13 @@ pub trait Shape {
     }
 }
 
-#[derive(Debug, Clone)]
+impl Debug for dyn Shape {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Shape transform: {{{:?}}}", self.get_transform())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 struct TestShape {
     transform: Matrix,
     material: Material,
@@ -83,6 +91,24 @@ impl Sphere {
             material: Material::new(),
         }
     }
+
+    pub fn with_transform(self, transform: &Matrix) -> Self {
+        Self {
+            origin: self.origin,
+            radii: self.radii,
+            transform: transform.clone(),
+            material: self.material,
+        }
+    }
+
+    pub fn with_material(self, material: &Material) -> Self {
+        Self {
+            origin: self.origin,
+            radii: self.radii,
+            transform: self.transform,
+            material: material.clone(),
+        }
+    }
 }
 
 impl Shape for Sphere {
@@ -121,6 +147,65 @@ impl Shape for Sphere {
 
     fn local_normal_at(&self, local_point: &Tuple) -> Tuple {
         local_point - &Tuple::point(0.0, 0.0, 0.0)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)] 
+pub struct Plane {
+    transform: Matrix,
+    material: Material,
+}
+
+impl Plane {
+    pub fn new() -> Self {
+        Self {
+            transform: Matrix::identify(),
+            material: Material::new(),
+        }
+    }
+
+    pub fn with_transform(self, transform: &Matrix) -> Self {
+        Self {
+            transform: transform.clone(),
+            material: self.material,
+        }
+    }
+
+    pub fn with_material(self, material: &Material) -> Self {
+        Self {
+            transform: self.transform,
+            material: material.clone(),
+        }
+    }
+}
+
+impl Shape for Plane {
+    fn get_transform(&self) -> Matrix {
+        self.transform.clone()
+    }
+
+    fn set_transform(&mut self, transform: &Matrix) {
+        self.transform = transform.clone();
+    }
+
+    fn get_material(&self) -> Material {
+        self.material.clone()
+    }
+
+    fn set_material(&mut self, material: &Material) {
+        self.material = material.clone();
+    }
+
+    fn intersect(&self, ray: &Ray) -> Vec<f64> {
+        if ray.direction.y.abs() < EPSILON {
+            vec![]
+        } else {
+            vec![-ray.origin.y / ray.direction.y]
+        }
+    }
+
+    fn local_normal_at(&self, local_point: &Tuple) -> Tuple {
+        Tuple::vector(0.0, 1.0, 0.0)
     }
 }
 
@@ -265,5 +350,59 @@ mod tests {
 
         assert_eq!(s.material, m);
     }
+
+    // Plane
+    #[test]
+    fn test_the_normal_of_a_plane_is_constant_everywhere() {
+        let p = Plane::new();
+        assert_eq!(p.local_normal_at(&Tuple::point(0.0, 0.0, 0.0)), Tuple::vector(0.0, 1.0, 0.0));
+        assert_eq!(p.local_normal_at(&Tuple::point(10.0, 0.0, -10.0)), Tuple::vector(0.0, 1.0, 0.0));
+        assert_eq!(p.local_normal_at(&Tuple::point(-5.0, 0.0, 150.0)), Tuple::vector(0.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn test_intersect_with_a_ray_parallel_to_the_plane() {
+        let p = Plane::new();
+        let r = Ray::new(&Tuple::point(0.0, 10.0, 0.0), &Tuple::vector(0.0, 0.0, 1.0));
+
+        let xs = p.intersect(&r);
+
+        assert_eq!(xs.len(), 0);
+    }
+
+    #[test]
+    fn test_intersect_with_a_coplanar_ray() {
+        let p = Plane::new();
+        let r = Ray::new(&Tuple::point(0.0, 0.0, 0.0), &Tuple::vector(0.0, 0.0, 1.0));
+
+        let xs = p.intersect(&r);
+
+        assert_eq!(xs.len(), 0);
+    }
+
+    #[test]
+    fn test_intersect_with_a_plane_from_above() {
+        let p = Plane::new();
+        let r = Ray::new(&Tuple::point(0.0, 1.0, 0.0), &Tuple::vector(0.0, -1.0, 0.0));
+
+        let xs = p.intersect(&r);
+
+        assert_eq!(xs.len(), 1);
+        assert_eq!(xs[0], 1.0);
+    }
+
+    #[test]
+    fn test_intersect_with_a_plane_from_below() {
+        let p = Plane::new();
+        let r = Ray::new(&Tuple::point(0.0, -1.0, 0.0), &Tuple::vector(0.0, 1.0, 0.0));
+
+        let xs = p.intersect(&r);
+
+        assert_eq!(xs.len(), 1);
+        assert_eq!(xs[0], 1.0);
+    }
+
+
+
 }
 

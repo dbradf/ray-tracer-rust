@@ -5,6 +5,7 @@ use ray_tracer::ray::Ray;
 use ray_tracer::shapes::{Sphere, Shape};
 use ray_tracer::tuple::Tuple;
 use std::f64::consts::PI;
+use std::rc::Rc;
 
 fn main() {
     let canvas_pixels = 100;
@@ -17,14 +18,14 @@ fn main() {
     let mut canvas = Canvas::new(canvas_pixels, canvas_pixels);
 
     let ray_origin = Tuple::point(0.0, 0.0, -5.0);
-    let mut shape = Sphere::new();
-    shape.set_transform(&(Matrix::rotation_z(PI / 4.0) * Matrix::scaling(0.5, 1.0, 1.0)));
+    let mut shape_m = Material::new();
+    shape_m.color = Color::new(1.0, 0.2, 1.0);
+    let shape = Rc::new(Sphere::new()
+                        .with_material(&shape_m)
+                        .with_transform(&(Matrix::rotation_z(PI / 4.0) * Matrix::scaling(0.5, 1.0, 1.0))));
     // shape.set_transform(
       //  &(Matrix::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0) * Matrix::scaling(0.5, 1.0, 1.0)),
     //);
-    let mut shape_m = Material::new();
-    shape_m.color = Color::new(1.0, 0.2, 1.0);
-    shape.set_material(&shape_m);
 
     let light_position = Tuple::point(-10.0, 10.0, -10.0);
     let light_color = Color::white();
@@ -38,7 +39,7 @@ fn main() {
             let position = Tuple::point(world_x, world_y, wall_z);
 
             let r = Ray::new(&ray_origin, &(position - ray_origin.clone()).normalize());
-            let xs = r.intersect(&shape);
+            let xs = r.intersect(shape.clone());
 
             if let Some(hit) = xs.hit() {
                 let point = r.position(hit.t);

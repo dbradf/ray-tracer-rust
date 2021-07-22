@@ -2,6 +2,7 @@ use crate::matrix::Matrix;
 use crate::tuple::Tuple;
 use crate::utils::EPSILON;
 use crate::shapes::Shape;
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub struct Ray {
@@ -21,11 +22,11 @@ impl Ray {
         &self.origin + &(&self.direction * t)
     }
 
-    pub fn intersect<'a>(&self, s: &'a dyn Shape) -> Intersections<'a> {
+    pub fn intersect(&self, s: Rc<dyn Shape>) -> Intersections {
         let transform = s.get_transform();
         let ray = self.transform(&transform.inverse().unwrap());
 
-        Intersections::new(s.intersect(&ray).iter().map(|i| Intersection::new(*i, s)).collect())
+        Intersections::new(s.intersect(&ray).iter().map(|i| Intersection::new(*i, s.clone())).collect())
     }
 
     pub fn transform(&self, m: &Matrix) -> Self {
@@ -34,9 +35,9 @@ impl Ray {
 }
 
 #[derive(Clone)]
-pub struct Computation<'a> {
+pub struct Computation {
     pub t: f64,
-    pub object: &'a dyn Shape,
+    pub object: Rc<dyn Shape>,
     pub point: Tuple,
     pub eyev: Tuple,
     pub normalv: Tuple,
@@ -44,15 +45,15 @@ pub struct Computation<'a> {
     pub over_point: Tuple,
 }
 
-#[derive(Clone)]
-pub struct Intersection<'a> {
+#[derive(Clone, Debug)]
+pub struct Intersection {
     pub t: f64,
-    pub object: &'a dyn Shape,
+    pub object: Rc<dyn Shape>,
 }
 
-impl<'a> Intersection<'a> {
-    pub fn new(t: f64, object: &'a dyn Shape) -> Intersection<'a> {
-        Self { t, object }
+impl Intersection {
+    pub fn new(t: f64, object: Rc<dyn Shape>) -> Intersection {
+        Self { t, object: object.clone() }
     }
 
     pub fn prepare_computation(&self, ray: &Ray) -> Computation {
@@ -69,7 +70,7 @@ impl<'a> Intersection<'a> {
 
         Computation {
             t: self.t,
-            object: self.object,
+            object: self.object.clone(),
             point: point.clone(),
             eyev,
             inside,
@@ -79,19 +80,19 @@ impl<'a> Intersection<'a> {
     }
 }
 
-impl<'a> PartialEq for &Intersection<'a> {
+impl PartialEq for &Intersection {
     fn eq(&self, other: &Self) -> bool {
-        (self.t == other.t) && (std::ptr::eq(self.object, other.object))
+        (self.t == other.t) && (std::ptr::eq(self.object.as_ref(), other.object.as_ref()))
     }
 }
 
 #[derive(Clone)]
-pub struct Intersections<'a> {
-    intersections: Vec<Intersection<'a>>,
+pub struct Intersections {
+    intersections: Vec<Intersection>,
 }
 
-impl<'a> Intersections<'a> {
-    pub fn new(intersections: Vec<Intersection<'a>>) -> Intersections<'a> {
+impl Intersections {
+    pub fn new(intersections: Vec<Intersection>) -> Intersections {
         Self { intersections }
     }
 
@@ -99,11 +100,11 @@ impl<'a> Intersections<'a> {
         self.intersections.len()
     }
 
-    pub fn at<'b>(&self, index: usize) -> &'b Intersection {
-        &self.intersections[index]
+    pub fn at(&self, index: usize) -> Intersection {
+        self.intersections[index].clone()
     }
 
-    pub fn hit<'b>(&self) -> Option<&'b Intersection> {
+    pub fn hit(&self) -> Option<Intersection> {
         let mut lowest_index: Option<usize> = None;
 
         for (i, intersect) in self.intersections.iter().enumerate() {
@@ -159,9 +160,9 @@ mod tests {
     #[test]
     fn test_a_ray_intersects_a_sphere_at_two_points() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
+        let s = Rc::new(Sphere::new());
 
-        let xs = r.intersect(&s);
+        let xs = r.intersect(s.clone());
 
         assert_eq!(xs.count(), 2);
         assert_eq!(xs.at(0).t, 4.0);
@@ -171,9 +172,9 @@ mod tests {
     #[test]
     fn test_a_ray_intersects_a_sphere_at_a_tangent() {
         let r = Ray::new(&Tuple::point(0.0, 1.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
+        let s = Rc::new(Sphere::new());
 
-        let xs = r.intersect(&s);
+        let xs = r.intersect(s.clone());
 
         assert_eq!(xs.count(), 2);
         assert_eq!(xs.at(0).t, 5.0);
@@ -183,9 +184,9 @@ mod tests {
     #[test]
     fn test_a_ray_misses_a_sphere() {
         let r = Ray::new(&Tuple::point(0.0, 2.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
+        let s = Rc::new(Sphere::new());
 
-        let xs = r.intersect(&s);
+        let xs = r.intersect(s.clone());
 
         assert_eq!(xs.count(), 0);
     }
@@ -193,9 +194,9 @@ mod tests {
     #[test]
     fn test_a_ray_originates_inside_a_sphere() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, 0.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
+        let s = Rc::new(Sphere::new());
 
-        let xs = r.intersect(&s);
+        let xs = r.intersect(s.clone());
 
         assert_eq!(xs.count(), 2);
         assert_eq!(xs.at(0).t, -1.0);
@@ -205,9 +206,9 @@ mod tests {
     #[test]
     fn test_a_ray_originates_behind_a_sphere() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, 5.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
+        let s = Rc::new(Sphere::new());
 
-        let xs = r.intersect(&s);
+        let xs = r.intersect(s.clone());
 
         assert_eq!(xs.count(), 2);
         assert_eq!(xs.at(0).t, -6.0);
@@ -216,67 +217,67 @@ mod tests {
 
     #[test]
     fn test_an_interestion_encapsulates_t_and_object() {
-        let s = Sphere::new();
-        let i = Intersection::new(3.5, &s);
+        let s = Rc::new(Sphere::new());
+        let i = Intersection::new(3.5, s.clone());
 
         assert_eq!(i.t, 3.5);
-        assert!(std::ptr::eq(i.object, &s));
+        assert!(std::ptr::eq(i.object.as_ref(), s.as_ref()));
     }
 
     #[test]
     fn test_aggregating_intersections() {
-        let s = Sphere::new();
-        let i1 = Intersection::new(1.0, &s);
-        let i2 = Intersection::new(2.0, &s);
+        let s = Rc::new(Sphere::new());
+        let i1 = Intersection::new(1.0, s.clone());
+        let i2 = Intersection::new(2.0, s.clone());
 
         let xs = Intersections::new(vec![i1, i2]);
 
         assert_eq!(xs.count(), 2);
-        assert!(std::ptr::eq(xs.at(0).object, &s));
-        assert!(std::ptr::eq(xs.at(1).object, &s));
+        assert!(std::ptr::eq(xs.at(0).object.as_ref(), s.as_ref()));
+        assert!(std::ptr::eq(xs.at(1).object.as_ref(), s.as_ref()));
     }
 
     #[test]
     fn test_intersect_sets_the_object_on_the_intersection() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
+        let s = Rc::new(Sphere::new());
 
-        let xs = r.intersect(&s);
+        let xs = r.intersect(s.clone());
 
         assert_eq!(xs.count(), 2);
-        assert!(std::ptr::eq(xs.at(0).object, &s));
-        assert!(std::ptr::eq(xs.at(1).object, &s));
+        assert!(std::ptr::eq(xs.at(0).object.as_ref(), s.as_ref()));
+        assert!(std::ptr::eq(xs.at(1).object.as_ref(), s.as_ref()));
     }
 
     #[test]
     fn test_the_hit_when_all_intersections_have_positive_t() {
-        let s = Sphere::new();
-        let i1 = Intersection::new(1.0, &s);
-        let i2 = Intersection::new(2.0, &s);
+        let s = Rc::new(Sphere::new());
+        let i1 = Intersection::new(1.0, s.clone());
+        let i2 = Intersection::new(2.0, s.clone());
         let xs = Intersections::new(vec![i1.clone(), i2]);
 
         let i = xs.hit().unwrap();
 
-        assert!(i == &i1);
+        assert!(&i == &i1);
     }
 
     #[test]
     fn test_the_hit_when_some_intersections_have_negative_t() {
-        let s = Sphere::new();
-        let i1 = Intersection::new(-1.0, &s);
-        let i2 = Intersection::new(1.0, &s);
+        let s = Rc::new(Sphere::new());
+        let i1 = Intersection::new(-1.0, s.clone());
+        let i2 = Intersection::new(1.0, s.clone());
         let xs = Intersections::new(vec![i1.clone(), i2.clone()]);
 
         let i = xs.hit().unwrap();
 
-        assert!(i == &i2);
+        assert!(&i == &i2);
     }
 
     #[test]
     fn test_the_hit_when_all_intersections_have_negative_t() {
-        let s = Sphere::new();
-        let i1 = Intersection::new(-2.0, &s);
-        let i2 = Intersection::new(-1.0, &s);
+        let s = Rc::new(Sphere::new());
+        let i1 = Intersection::new(-2.0, s.clone());
+        let i2 = Intersection::new(-1.0, s.clone());
         let xs = Intersections::new(vec![i1.clone(), i2.clone()]);
 
         let i = xs.hit();
@@ -286,16 +287,16 @@ mod tests {
 
     #[test]
     fn test_the_hit_is_always_the_lowest_nonnegative_intersection() {
-        let s = Sphere::new();
-        let i1 = Intersection::new(5.0, &s);
-        let i2 = Intersection::new(7.0, &s);
-        let i3 = Intersection::new(-3.0, &s);
-        let i4 = Intersection::new(2.0, &s);
+        let s = Rc::new(Sphere::new());
+        let i1 = Intersection::new(5.0, s.clone());
+        let i2 = Intersection::new(7.0, s.clone());
+        let i3 = Intersection::new(-3.0, s.clone());
+        let i4 = Intersection::new(2.0, s.clone());
         let xs = Intersections::new(vec![i1.clone(), i2.clone(), i3.clone(), i4.clone()]);
 
         let i = xs.hit().unwrap();
 
-        assert!(i == &i4);
+        assert_eq!(&i, &i4);
     }
 
     #[test]
@@ -340,10 +341,9 @@ mod tests {
     #[test]
     fn test_intersecting_a_scaled_sphere_with_a_ray() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let mut s = Sphere::new();
-        s.set_transform(&Matrix::scaling(2.0, 2.0, 2.0));
+        let s = Rc::new(Sphere::new().with_transform(&Matrix::scaling(2.0, 2.0, 2.0)));
 
-        let xs = r.intersect(&s);
+        let xs = r.intersect(s.clone());
 
         assert_eq!(xs.count(), 2);
         assert_eq!(xs.at(0).t, 3.0);
@@ -353,10 +353,9 @@ mod tests {
     #[test]
     fn test_intersecting_a_translated_sphere_with_a_ray() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let mut s = Sphere::new();
-        s.set_transform(&Matrix::translation(5.0, 0.0, 0.0));
+        let s = Rc::new(Sphere::new().with_transform(&Matrix::translation(5.0, 0.0, 0.0)));
 
-        let xs = r.intersect(&s);
+        let xs = r.intersect(s.clone());
 
         assert_eq!(xs.count(), 0);
     }
@@ -364,13 +363,13 @@ mod tests {
     #[test]
     fn test_precomputing_the_state_of_an_intersection() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let shape = Sphere::new();
-        let i = Intersection::new(4.0, &shape);
+        let shape = Rc::new(Sphere::new());
+        let i = Intersection::new(4.0, shape.clone());
 
         let comps = i.prepare_computation(&r);
 
         assert!(equal_f64(comps.t, i.t));
-        assert!(std::ptr::eq(comps.object,  i.object));
+        assert!(std::ptr::eq(comps.object.as_ref(),  i.object.as_ref()));
         assert_eq!(comps.point, Tuple::point(0.0, 0.0, -1.0));
         assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
         assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
@@ -379,8 +378,8 @@ mod tests {
     #[test]
     fn test_the_hit_when_an_intersection_occurs_on_the_outside() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let shape = Sphere::new();
-        let i = Intersection::new(4.0, &shape);
+        let shape = Rc::new(Sphere::new());
+        let i = Intersection::new(4.0, shape.clone());
 
         let comps = i.prepare_computation(&r);
 
@@ -390,8 +389,8 @@ mod tests {
     #[test]
     fn test_the_hit_when_an_intersection_occurs_on_the_inside() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, 0.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let shape = Sphere::new();
-        let i = Intersection::new(1.0, &shape);
+        let shape = Rc::new(Sphere::new());
+        let i = Intersection::new(1.0, shape.clone());
 
         let comps = i.prepare_computation(&r);
 
@@ -404,9 +403,8 @@ mod tests {
     #[test]
     fn test_the_hit_should_offset_the_point() {
         let r = Ray::new(&Tuple::point(0.0, 0.0, -5.0), &Tuple::vector(0.0, 0.0, 1.0));
-        let mut shape = Sphere::new();
-        shape.set_transform(&Matrix::translation(0.0, 0.0, 1.0));
-        let i = Intersection::new(5.0, &shape);
+        let shape = Rc::new(Sphere::new().with_transform(&Matrix::translation(0.0, 0.0, 1.0)));
+        let i = Intersection::new(5.0, shape.clone());
         
         let comps = i.prepare_computation(&r);
 
