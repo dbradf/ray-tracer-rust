@@ -1,7 +1,7 @@
 use crate::canvas::Color;
+use crate::pattern::Pattern;
 use crate::shapes::Shape;
 use crate::tuple::Tuple;
-use crate::pattern::Pattern;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -38,7 +38,6 @@ impl Material {
             specular: 0.9,
             shininess: 200.0,
             pattern: None,
-
         }
     }
 }
@@ -101,9 +100,9 @@ pub fn lighting(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::equal_f64;
     use crate::pattern::StripePattern;
     use crate::shapes::Sphere;
+    use crate::utils::equal_f64;
 
     #[test]
     fn test_a_point_light_has_a_position_and_intensity() {
@@ -136,7 +135,15 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(&Tuple::point(0.0, 0.0, -10.0), &Color::new(1.0, 1.0, 1.0));
 
-        let result = lighting(&m, Arc::new(Sphere::new()), &light, &position, &eyev, &normalv, false);
+        let result = lighting(
+            &m,
+            Arc::new(Sphere::new()),
+            &light,
+            &position,
+            &eyev,
+            &normalv,
+            false,
+        );
 
         assert_eq!(result, Color::new(1.9, 1.9, 1.9));
     }
@@ -150,7 +157,15 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(&Tuple::point(0.0, 0.0, -10.0), &Color::new(1.0, 1.0, 1.0));
 
-        let result = lighting(&m, Arc::new(Sphere::new()), &light, &position, &eyev, &normalv, false);
+        let result = lighting(
+            &m,
+            Arc::new(Sphere::new()),
+            &light,
+            &position,
+            &eyev,
+            &normalv,
+            false,
+        );
 
         assert_eq!(result, Color::new(1.0, 1.0, 1.0));
     }
@@ -164,7 +179,15 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(&Tuple::point(0.0, 10.0, -10.0), &Color::new(1.0, 1.0, 1.0));
 
-        let result = lighting(&m, Arc::new(Sphere::new()), &light, &position, &eyev, &normalv, false);
+        let result = lighting(
+            &m,
+            Arc::new(Sphere::new()),
+            &light,
+            &position,
+            &eyev,
+            &normalv,
+            false,
+        );
 
         assert_eq!(result, Color::new(0.7364, 0.7364, 0.7364));
     }
@@ -178,7 +201,15 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(&Tuple::point(0.0, 10.0, -10.0), &Color::new(1.0, 1.0, 1.0));
 
-        let result = lighting(&m, Arc::new(Sphere::new()), &light, &position, &eyev, &normalv, false);
+        let result = lighting(
+            &m,
+            Arc::new(Sphere::new()),
+            &light,
+            &position,
+            &eyev,
+            &normalv,
+            false,
+        );
 
         assert_eq!(result, Color::new(1.6364, 1.6364, 1.6364));
     }
@@ -192,7 +223,15 @@ mod tests {
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = PointLight::new(&Tuple::point(0.0, 0.0, 10.0), &Color::new(1.0, 1.0, 1.0));
 
-        let result = lighting(&m, Arc::new(Sphere::new()), &light, &position, &eyev, &normalv, false);
+        let result = lighting(
+            &m,
+            Arc::new(Sphere::new()),
+            &light,
+            &position,
+            &eyev,
+            &normalv,
+            false,
+        );
 
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }
@@ -207,7 +246,15 @@ mod tests {
         let light = PointLight::new(&Tuple::point(0.0, 0.0, -10.0), &Color::white());
         let in_shadow = true;
 
-        let result = lighting(&m, Arc::new(Sphere::new()), &light, &position, &eyev, &normalv, in_shadow);
+        let result = lighting(
+            &m,
+            Arc::new(Sphere::new()),
+            &light,
+            &position,
+            &eyev,
+            &normalv,
+            in_shadow,
+        );
 
         assert_eq!(result, Color::new(0.1, 0.1, 0.1));
     }
@@ -215,7 +262,10 @@ mod tests {
     #[test]
     fn test_lighting_with_a_pattern_applied() {
         let mut m = Material::new();
-        m.pattern = Some(Arc::new(StripePattern::new(&Color::white(), &Color::black())));
+        m.pattern = Some(Arc::new(StripePattern::new(
+            &Color::white(),
+            &Color::black(),
+        )));
         m.ambient = 1.0;
         m.diffuse = 0.0;
         m.specular = 0.0;
@@ -225,11 +275,27 @@ mod tests {
         let light = PointLight::new(&Tuple::point(0.0, 0.0, -10.0), &Color::white());
 
         assert_eq!(
-            lighting(&m, Arc::new(Sphere::new()), &light, &Tuple::point(0.9, 0.0, 0.0), &eyev, &normalv, false),
+            lighting(
+                &m,
+                Arc::new(Sphere::new()),
+                &light,
+                &Tuple::point(0.9, 0.0, 0.0),
+                &eyev,
+                &normalv,
+                false
+            ),
             Color::white()
         );
         assert_eq!(
-            lighting(&m, Arc::new(Sphere::new()), &light, &Tuple::point(1.1, 0.0, 0.0), &eyev, &normalv, false),
+            lighting(
+                &m,
+                Arc::new(Sphere::new()),
+                &light,
+                &Tuple::point(1.1, 0.0, 0.0),
+                &eyev,
+                &normalv,
+                false
+            ),
             Color::black()
         );
     }
