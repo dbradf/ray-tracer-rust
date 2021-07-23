@@ -68,7 +68,7 @@ impl Shape for TestShape {
         Tuple::vector(local_point.x, local_point.y, local_point.z)
     }
 
-    fn intersect(&self, ray: &Ray) -> Vec<f64> {
+    fn intersect(&self, _ray: &Ray) -> Vec<f64> {
         todo!()
     }
 }
@@ -203,7 +203,7 @@ impl Shape for Plane {
         }
     }
 
-    fn local_normal_at(&self, local_point: &Tuple) -> Tuple {
+    fn local_normal_at(&self, _local_point: &Tuple) -> Tuple {
         Tuple::vector(0.0, 1.0, 0.0)
     }
 }

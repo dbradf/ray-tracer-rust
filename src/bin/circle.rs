@@ -49,6 +49,7 @@ fn main() {
                 let eye = -r.direction;
                 let color = lighting(
                     &hit.object.get_material(),
+                    shape.clone(),
                     &light,
                     &point,
                     &eye,

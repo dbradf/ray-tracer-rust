@@ -1,7 +1,7 @@
 use crate::canvas::Color;
 use crate::light::{lighting, Material, PointLight};
 use crate::matrix::Matrix;
-use crate::ray::{Computation, Intersection, Intersections, Ray};
+use crate::ray::{Computation, Intersections, Ray};
 use crate::shapes::{Shape, Sphere};
 use crate::tuple::Tuple;
 use std::sync::Arc;
@@ -66,6 +66,7 @@ impl World {
             let is_shadowed = self.is_shadowed(&comps.over_point);
             lighting(
                 &comps.object.get_material(),
+                comps.object.clone(),
                 light,
                 &comps.point,
                 &comps.eyev,
@@ -110,6 +111,7 @@ impl World {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ray::Intersection;
 
     #[test]
     fn test_creating_a_world() {

@@ -2,6 +2,7 @@ pub mod camera;
 pub mod canvas;
 pub mod light;
 pub mod matrix;
+pub mod pattern;
 pub mod ray;
 pub mod shapes;
 pub mod transformations;

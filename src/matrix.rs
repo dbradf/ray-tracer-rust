@@ -1,8 +1,6 @@
 use crate::tuple::Tuple;
 use crate::utils::equal_f64;
 
-use std::f64::consts::PI;
-
 #[derive(Debug, Clone)]
 pub struct Matrix {
     size: usize,
@@ -308,6 +306,7 @@ impl std::ops::Mul<&Tuple> for &Matrix {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::f64::consts::PI;
 
     #[test]
     fn test_constructing_and_inspecting_a_4_x_4_matrix() {
